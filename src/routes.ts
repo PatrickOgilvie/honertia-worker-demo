@@ -5,7 +5,7 @@ import {
   RequireAuthLayer,
   RequireGuestLayer,
 } from 'honertia'
-import { loginUser, registerUser } from './actions/auth'
+import { loginUser, registerUser, logoutUser } from './actions/auth'
 import {
   showDashboard,
   listProjects,
@@ -20,6 +20,7 @@ export function registerRoutes(app: Hono<any>) {
   effectAuthRoutes(app, {
     loginComponent: 'Auth/Login',
     registerComponent: 'Auth/Register',
+    logoutPath: '/auth/logout',
     logoutRedirect: '/login',
   })
 
@@ -29,6 +30,13 @@ export function registerRoutes(app: Hono<any>) {
     .group((route) => {
       route.post('/login', loginUser)
       route.post('/register', registerUser)
+    })
+
+  // Logout (auth required)
+  effectRoutes(app)
+    .provide(RequireAuthLayer)
+    .group((route) => {
+      route.post('/logout', logoutUser)
     })
 
   // Protected routes - dashboard

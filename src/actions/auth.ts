@@ -122,6 +122,30 @@ function appendSetCookies(target: Headers, source: Headers) {
   }
 }
 
+function appendExpiredCookie(
+  target: Headers,
+  name: string,
+  options: { secure?: boolean } = {}
+) {
+  const base = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax`
+  const value = options.secure ? `${base}; Secure` : base
+  target.append('set-cookie', value)
+}
+
+function appendLogoutCookies(target: Headers) {
+  const cookieNames = [
+    'better-auth.session_token',
+    'better-auth.session_data',
+    'better-auth.account_data',
+    'better-auth.dont_remember',
+  ]
+
+  for (const name of cookieNames) {
+    appendExpiredCookie(target, name)
+    appendExpiredCookie(target, `__Secure-${name}`, { secure: true })
+  }
+}
+
 export const loginUser = Effect.gen(function* () {
   const auth = (yield* AuthService) as Auth
   const request = yield* RequestService
@@ -190,6 +214,35 @@ export const registerUser = Effect.gen(function* () {
     Location: '/',
   })
   appendSetCookies(responseHeaders, headers)
+
+  return new Response(null, {
+    status: 303,
+    headers: responseHeaders,
+  })
+})
+
+export const logoutUser = Effect.gen(function* () {
+  const auth = (yield* AuthService) as Auth
+  const request = yield* RequestService
+
+  const attempt = yield* Effect.tryPromise({
+    try: () =>
+      auth.api.signOut({
+        headers: request.headers,
+        returnHeaders: true,
+      }) as Promise<{ headers: Headers }>,
+    catch: (error) => error,
+  }).pipe(Effect.either)
+
+  const responseHeaders = new Headers({
+    Location: '/login',
+  })
+
+  if (Either.isRight(attempt)) {
+    appendSetCookies(responseHeaders, attempt.right.headers)
+  } else {
+    appendLogoutCookies(responseHeaders)
+  }
 
   return new Response(null, {
     status: 303,
