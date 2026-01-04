@@ -1,0 +1,51 @@
+{
+  "name": "honertia-worker-demo",
+  "version": "1.0.0",
+  "description": "Demo app showcasing Honertia with D1 database and better-auth authentication on Cloudflare Workers",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"bun run dev:vite\" \"bun run dev:worker\"",
+    "dev:vite": "vite --port 5173",
+    "dev:worker": "wrangler dev --port 8787",
+    "build": "vite build",
+    "db:create": "wrangler d1 create honertia-demo-db",
+    "db:migrate": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "secret:generate": "openssl rand -base64 32 | wrangler secret put BETTER_AUTH_SECRET",
+    "setup": "bun run db:create && bun run secret:generate",
+    "deploy": "bun run build && bun run db:migrate && wrangler deploy"
+  },
+  "dependencies": {
+    "@inertiajs/react": "^2.0.0",
+    "better-auth": "^1.0.0",
+    "drizzle-orm": "^0.41.0",
+    "effect": "^3.12.0",
+    "honertia": "^0.1.0",
+    "hono": "^4.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^9.2.1",
+    "drizzle-kit": "^0.31.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "wrangler": "^4.54.0"
+  },
+  "deploy-button": {
+    "bindings": {
+      "DB": {
+        "description": "D1 database for storing users and projects"
+      },
+      "BETTER_AUTH_SECRET": {
+        "description": "Secret key for authentication (any random string)"
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+# Authentication secret - use any random string
+BETTER_AUTH_SECRET=your-secret-key-here-change-in-production
+
+# Environment - set to development for local dev (uses Vite HMR)
+ENVIRONMENT=development
