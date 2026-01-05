@@ -1,6 +1,6 @@
 import type { Hono } from 'hono'
 import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from 'honertia'
-import { loginUser, registerUser } from './actions/auth'
+import { loginUser, registerUser, logoutUser } from './actions/auth'
 import {
   showDashboard,
   listProjects,
@@ -17,6 +17,7 @@ export function registerRoutes(app: Hono<any>) {
     registerComponent: 'Auth/Register',
     loginAction: loginUser,
     registerAction: registerUser,
+    logoutAction: logoutUser,
   })
 
   // Protected routes - dashboard and projects
