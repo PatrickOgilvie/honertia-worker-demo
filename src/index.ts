@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { setupHonertia, createTemplate, createVersion, vite, registerErrorHandlers } from 'honertia'
+import { shareAuthMiddleware } from 'honertia/auth'
 import { createDb } from './db/db'
 import { createAuth } from './lib/auth'
 import { registerRoutes } from './routes'
@@ -21,9 +22,7 @@ const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 app.use('*', async (c, next) => {
   const db = createDb(c.env.DB)
   c.set('db', db)
-  c.set(
-    'auth',
-    createAuth({
+  c.set('auth', createAuth({
       db,
       secret: c.env.BETTER_AUTH_SECRET,
       baseURL: new URL(c.req.url).origin,
@@ -58,6 +57,7 @@ app.use(
         }
       }),
     },
+    middleware: [shareAuthMiddleware()],
   })
 )
 

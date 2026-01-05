@@ -75,7 +75,3 @@ export const registerUser = betterAuthFormAction({
       returnHeaders: true,
     }),
 })
-
-export const logoutUser = betterAuthLogoutAction({
-  redirectTo: '/login',
-})

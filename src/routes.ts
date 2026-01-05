@@ -1,6 +1,6 @@
 import type { Hono } from 'hono'
 import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from 'honertia'
-import { loginUser, registerUser, logoutUser } from './actions/auth'
+import { loginUser, registerUser } from './actions/auth'
 import {
   showDashboard,
   listProjects,
@@ -15,14 +15,8 @@ export function registerRoutes(app: Hono<any>) {
   effectAuthRoutes(app, {
     loginComponent: 'Auth/Login',
     registerComponent: 'Auth/Register',
-    logoutRedirect: '/login',
-    // @ts-expect-error - betterAuthFormAction/betterAuthLogoutAction return Effects with service requirements
-    // The effectAuthRoutes will provide these services automatically
     loginAction: loginUser,
-    // @ts-expect-error - betterAuthFormAction/betterAuthLogoutAction return Effects with service requirements
     registerAction: registerUser,
-    // @ts-expect-error - betterAuthFormAction/betterAuthLogoutAction return Effects with service requirements
-    logoutAction: logoutUser,
   })
 
   // Protected routes - dashboard and projects

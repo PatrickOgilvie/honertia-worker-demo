@@ -2,8 +2,8 @@ import { Effect, Schema as S } from 'effect'
 import {
   DatabaseService,
   RequestService,
+  AuthUserService,
   action,
-  authorize,
   render,
   redirect,
   notFound,
@@ -11,33 +11,27 @@ import {
   requiredString,
   nullableString,
 } from 'honertia/effect'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { projects } from '~/db/schema'
-import type { Database } from '~/db/db'
+
 
 // Dashboard
 export const showDashboard = action(
   Effect.gen(function* () {
-    const auth = yield* authorize()
-    return yield* render('Dashboard', {
-      user: {
-        name: auth.user.name || auth.user.email,
-        email: auth.user.email,
-      },
-    })
+    return yield* render('Dashboard')
   })
 )
 
 // List projects
 export const listProjects = action(
   Effect.gen(function* () {
-    const auth = yield* authorize()
-    const db = (yield* DatabaseService) as Database
+    const { user } = yield* AuthUserService
+    const db = yield* DatabaseService
 
     const userProjects = yield* Effect.tryPromise({
       try: () =>
         db.query.projects.findMany({
-          where: eq(projects.userId, auth.user.id),
+          where: eq(projects.userId, user.id),
           orderBy: (p, { desc }) => [desc(p.createdAt)],
         }),
       catch: (error) => new Error(String(error)),
@@ -52,8 +46,8 @@ export const listProjects = action(
 // Show single project
 export const showProject = action(
   Effect.gen(function* () {
-    const auth = yield* authorize()
-    const db = (yield* DatabaseService) as Database
+    const { user } = yield* AuthUserService
+    const db = yield* DatabaseService
     const request = yield* RequestService
 
     const id = request.param('id') || ''
@@ -61,12 +55,12 @@ export const showProject = action(
     const project = yield* Effect.tryPromise({
       try: () =>
         db.query.projects.findFirst({
-          where: eq(projects.id, id),
+          where: and(eq(projects.id, id), eq(projects.userId, user.id)),
         }),
       catch: (error) => new Error(String(error)),
     })
 
-    if (!project || project.userId !== auth.user.id) {
+    if (!project) {
       return yield* notFound('Project')
     }
 
@@ -77,8 +71,7 @@ export const showProject = action(
 // Show create form
 export const showCreateProject = action(
   Effect.gen(function* () {
-    yield* authorize()
-    return yield* render('Projects/Create', {})
+    return yield* render('Projects/Create')
   })
 )
 
@@ -91,8 +84,8 @@ const CreateProjectSchema = S.Struct({
 // Create project
 export const createProject = action(
   Effect.gen(function* () {
-    const auth = yield* authorize()
-    const db = (yield* DatabaseService) as Database
+    const { user } = yield* AuthUserService
+    const db = yield* DatabaseService
 
     const input = yield* validateRequest(CreateProjectSchema, {
       errorComponent: 'Projects/Create',
@@ -105,7 +98,7 @@ export const createProject = action(
         db.insert(projects).values({
           ...input,
           id: crypto.randomUUID(),
-          userId: auth.user.id,
+          userId: user.id,
           status: 'active',
           createdAt: now,
           updatedAt: now,
@@ -120,27 +113,27 @@ export const createProject = action(
 // Delete project
 export const deleteProject = action(
   Effect.gen(function* () {
-    const auth = yield* authorize()
-    const db = (yield* DatabaseService) as Database
+    const { user } = yield* AuthUserService
+    const db = yield* DatabaseService
     const request = yield* RequestService
 
     const id = request.param('id') || ''
 
-    // Verify ownership
+    // Verify ownership and delete
     const project = yield* Effect.tryPromise({
       try: () =>
         db.query.projects.findFirst({
-          where: eq(projects.id, id),
+          where: and(eq(projects.id, id), eq(projects.userId, user.id)),
         }),
       catch: (error) => new Error(String(error)),
     })
 
-    if (!project || project.userId !== auth.user.id) {
+    if (!project) {
       return yield* notFound('Project')
     }
 
     yield* Effect.tryPromise({
-      try: () => db.delete(projects).where(eq(projects.id, id)),
+      try: () => db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, user.id))),
       catch: (error) => new Error(String(error)),
     })
 
