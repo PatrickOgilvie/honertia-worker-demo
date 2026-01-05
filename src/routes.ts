@@ -1,10 +1,5 @@
 import type { Hono } from 'hono'
-import {
-  effectRoutes,
-  effectAuthRoutes,
-  RequireAuthLayer,
-  RequireGuestLayer,
-} from 'honertia'
+import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from 'honertia'
 import { loginUser, registerUser, logoutUser } from './actions/auth'
 import {
   showDashboard,
@@ -16,45 +11,32 @@ import {
 } from './actions/projects'
 
 export function registerRoutes(app: Hono<any>) {
-  // Auth routes (login, register, logout)
+  // Auth routes with unified config (pages + actions in one call)
   effectAuthRoutes(app, {
     loginComponent: 'Auth/Login',
     registerComponent: 'Auth/Register',
-    logoutPath: '/auth/logout',
     logoutRedirect: '/login',
+    // @ts-expect-error - betterAuthFormAction/betterAuthLogoutAction return Effects with service requirements
+    // The effectAuthRoutes will provide these services automatically
+    loginAction: loginUser,
+    // @ts-expect-error - betterAuthFormAction/betterAuthLogoutAction return Effects with service requirements
+    registerAction: registerUser,
+    // @ts-expect-error - betterAuthFormAction/betterAuthLogoutAction return Effects with service requirements
+    logoutAction: logoutUser,
   })
 
-  // Auth form actions (guest only)
-  effectRoutes(app)
-    .provide(RequireGuestLayer)
-    .group((route) => {
-      route.post('/login', loginUser)
-      route.post('/register', registerUser)
-    })
-
-  // Logout (auth required)
-  effectRoutes(app)
-    .provide(RequireAuthLayer)
-    .group((route) => {
-      route.post('/logout', logoutUser)
-    })
-
-  // Protected routes - dashboard
+  // Protected routes - dashboard and projects
   effectRoutes(app)
     .provide(RequireAuthLayer)
     .group((route) => {
       route.get('/', showDashboard)
-    })
 
-  // Protected routes - projects
-  effectRoutes(app)
-    .provide(RequireAuthLayer)
-    .prefix('/projects')
-    .group((route) => {
-      route.get('/', listProjects)
-      route.get('/create', showCreateProject)
-      route.post('/', createProject)
-      route.get('/:id', showProject)
-      route.delete('/:id', deleteProject)
+      route.prefix('/projects').group((route) => {
+        route.get('/', listProjects)
+        route.get('/create', showCreateProject)
+        route.post('/', createProject)
+        route.get('/:id', showProject)
+        route.delete('/:id', deleteProject)
+      })
     })
 }

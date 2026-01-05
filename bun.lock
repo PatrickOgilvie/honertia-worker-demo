@@ -445,7 +445,7 @@
 
     "hasown": ["hasown@2.0.2", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ=="],
 
-    "honertia": ["honertia@0.1.2", "", { "dependencies": { "effect": "^3.12.0" }, "peerDependencies": { "better-auth": ">=1.0.0", "hono": ">=4.0.0" } }, "sha512-Amv43gkFIjFahGqPiha2/cCJP3Sc9m7hBbdYyvgLsVguXPa5voOwCGQJD7MjSnuo1b+F5yNmNjT8J7BQsX7Q2g=="],
+    "honertia": ["honertia@0.1.5", "", { "dependencies": { "effect": "^3.12.0" }, "peerDependencies": { "better-auth": ">=1.0.0", "hono": ">=4.0.0" } }, "sha512-iEONnLQzXldoUkcJyYJA4urc2KoSBJPzuIX9BImWYVj0hgtdB8MAvVnFmx9a+F5mN4ped39wHhyyX4x0oJCMDQ=="],
 
     "hono": ["hono@4.11.3", "", {}, "sha512-PmQi306+M/ct/m5s66Hrg+adPnkD5jiO6IjA7WhWw0gSBSo1EcRegwuI1deZ+wd5pzCGynCcn2DprnE4/yEV4w=="],
 
