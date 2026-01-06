@@ -1,14 +1,14 @@
-import type { PageProps as InertiaPageProps } from '@inertiajs/react'
+import type { PageProps as InertiaPageProps } from '@inertiajs/core'
 
 
 import type { Database } from '~/db/db'
-import type { auth } from '~/lib/auth'
+import type { Auth } from '~/lib/auth'
 declare module 'honertia/effect' {
   interface HonertiaDatabaseType {
     type: Database
   }
   interface HonertiaAuthType {
-    type: typeof auth
+    type: Auth
   }
 }
 
@@ -39,4 +39,4 @@ export interface SharedProps {
   errors?: Record<string, string>
 }
 
-export type PageProps<T = Record<string, unknown>> = InertiaPageProps<T & SharedProps>
+export type PageProps<T = Record<string, unknown>> = InertiaPageProps & T & SharedProps

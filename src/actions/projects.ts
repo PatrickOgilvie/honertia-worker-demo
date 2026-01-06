@@ -3,6 +3,8 @@ import {
   DatabaseService,
   RequestService,
   AuthUserService,
+  dbMutation,
+  asTrusted,
   action,
   render,
   redirect,
@@ -12,7 +14,7 @@ import {
   nullableString,
 } from 'honertia/effect'
 import { and, eq } from 'drizzle-orm'
-import { projects } from '~/db/schema'
+import { projects, type NewProject } from '~/db/schema'
 
 
 // Dashboard
@@ -92,18 +94,17 @@ export const createProject = action(
     })
 
     const now = new Date()
+    const values = asTrusted<NewProject>({
+      ...input,
+      id: crypto.randomUUID(),
+      userId: user.id,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    })
 
-    yield* Effect.tryPromise({
-      try: () =>
-        db.insert(projects).values({
-          ...input,
-          id: crypto.randomUUID(),
-          userId: user.id,
-          status: 'active',
-          createdAt: now,
-          updatedAt: now,
-        }),
-      catch: (error) => new Error(String(error)),
+    yield* dbMutation(db, async (db) => {
+      await db.insert(projects).values(values)
     })
 
     return yield* redirect('/projects')
@@ -115,9 +116,8 @@ export const deleteProject = action(
   Effect.gen(function* () {
     const { user } = yield* AuthUserService
     const db = yield* DatabaseService
-    const request = yield* RequestService
 
-    const id = request.param('id') || ''
+    const { id } = yield* validateRequest(S.Struct({ id: S.UUID }))
 
     // Verify ownership and delete
     const project = yield* Effect.tryPromise({
@@ -132,9 +132,8 @@ export const deleteProject = action(
       return yield* notFound('Project')
     }
 
-    yield* Effect.tryPromise({
-      try: () => db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, user.id))),
-      catch: (error) => new Error(String(error)),
+    yield* dbMutation(db, async (db) => {
+      await db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, user.id)))
     })
 
     return yield* redirect('/projects')

@@ -20,7 +20,7 @@
     "better-auth": "^1.4.10",
     "drizzle-orm": "^0.41.0",
     "effect": "^3.19.14",
-    "honertia": "^0.1.9",
+    "honertia": "^0.1.11",
     "hono": "^4.11.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
