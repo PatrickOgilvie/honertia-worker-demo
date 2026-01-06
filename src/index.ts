@@ -63,6 +63,8 @@ app.use(
 
 // Register all routes
 registerRoutes(app)
-registerErrorHandlers(app)
+registerErrorHandlers(app, {
+  component: 'Errors/Error',
+})
 
 export default app

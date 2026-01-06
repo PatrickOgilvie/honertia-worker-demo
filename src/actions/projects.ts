@@ -50,9 +50,8 @@ export const showProject = action(
   Effect.gen(function* () {
     const { user } = yield* AuthUserService
     const db = yield* DatabaseService
-    const request = yield* RequestService
 
-    const id = request.param('id') || ''
+    const { id } = yield* validateRequest(S.Struct({ id: S.UUID }))
 
     const project = yield* Effect.tryPromise({
       try: () =>
