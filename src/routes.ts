@@ -9,6 +9,7 @@ import {
   createProject,
   deleteProject,
 } from './actions/projects'
+import * as schema from './db/schema'
 
 export function registerRoutes(app: Hono<any>) {
   // Auth routes with unified config (pages + actions in one call)
@@ -21,7 +22,7 @@ export function registerRoutes(app: Hono<any>) {
   })
 
   // Protected routes - dashboard and projects
-  effectRoutes(app)
+  effectRoutes(app, { schema })
     .provide(RequireAuthLayer)
     .group((route) => {
       route.get('/', showDashboard)
@@ -30,8 +31,8 @@ export function registerRoutes(app: Hono<any>) {
         route.get('/', listProjects)
         route.get('/create', showCreateProject)
         route.post('/', createProject)
-        route.get('/:id', showProject)
-        route.delete('/:id', deleteProject)
+        route.get('/{project}', showProject)
+        route.delete('/{project}', deleteProject)
       })
     })
 }

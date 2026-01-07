@@ -3,9 +3,12 @@ import type { PageProps as InertiaPageProps } from '@inertiajs/core'
 
 import type { Database } from '~/db/db'
 import type { Auth } from '~/lib/auth'
+import * as schema from '~/db/schema'
+
 declare module 'honertia/effect' {
   interface HonertiaDatabaseType {
     type: Database
+    schema: typeof schema
   }
   interface HonertiaAuthType {
     type: Auth

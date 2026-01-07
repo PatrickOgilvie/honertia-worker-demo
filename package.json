@@ -16,17 +16,17 @@
     "deploy": "bun run build && bun run db:migrate && wrangler deploy"
   },
   "dependencies": {
-    "@inertiajs/react": "^2.3.6",
+    "@inertiajs/react": "^2.3.7",
     "better-auth": "^1.4.10",
     "drizzle-orm": "^0.41.0",
     "effect": "^3.19.14",
-    "honertia": "^0.1.11",
+    "honertia": "^0.1.14",
     "hono": "^4.11.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260103.0",
+    "@cloudflare/workers-types": "^4.20260107.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -36,7 +36,7 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^6.4.1",
-    "wrangler": "^4.54.0"
+    "wrangler": "^4.57.0"
   },
   "deploy-button": {
     "bindings": {

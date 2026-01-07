@@ -1,20 +1,19 @@
 import { Effect, Schema as S } from 'effect'
 import {
   DatabaseService,
-  RequestService,
-  AuthUserService,
   dbMutation,
   asTrusted,
   action,
+  authorize,
+  bound,
   render,
   redirect,
-  notFound,
   validateRequest,
   requiredString,
   nullableString,
 } from 'honertia/effect'
-import { and, eq } from 'drizzle-orm'
-import { projects, type NewProject } from '~/db/schema'
+import { eq } from 'drizzle-orm'
+import { projects, type NewProject, type Project } from '~/db/schema'
 
 
 // Dashboard
@@ -27,13 +26,13 @@ export const showDashboard = action(
 // List projects
 export const listProjects = action(
   Effect.gen(function* () {
-    const { user } = yield* AuthUserService
+    const auth = yield* authorize()
     const db = yield* DatabaseService
 
     const userProjects = yield* Effect.tryPromise({
       try: () =>
         db.query.projects.findMany({
-          where: eq(projects.userId, user.id),
+          where: eq(projects.userId, auth.user.id),
           orderBy: (p, { desc }) => [desc(p.createdAt)],
         }),
       catch: (error) => new Error(String(error)),
@@ -48,23 +47,7 @@ export const listProjects = action(
 // Show single project
 export const showProject = action(
   Effect.gen(function* () {
-    const { user } = yield* AuthUserService
-    const db = yield* DatabaseService
-
-    const { id } = yield* validateRequest(S.Struct({ id: S.UUID }))
-
-    const project = yield* Effect.tryPromise({
-      try: () =>
-        db.query.projects.findFirst({
-          where: and(eq(projects.id, id), eq(projects.userId, user.id)),
-        }),
-      catch: (error) => new Error(String(error)),
-    })
-
-    if (!project) {
-      return yield* notFound('Project')
-    }
-
+    const project = yield* bound('project')
     return yield* render('Projects/Show', { project })
   })
 )
@@ -85,7 +68,7 @@ const CreateProjectSchema = S.Struct({
 // Create project
 export const createProject = action(
   Effect.gen(function* () {
-    const { user } = yield* AuthUserService
+    const auth = yield* authorize()
     const db = yield* DatabaseService
 
     const input = yield* validateRequest(CreateProjectSchema, {
@@ -96,7 +79,7 @@ export const createProject = action(
     const values = asTrusted<NewProject>({
       ...input,
       id: crypto.randomUUID(),
-      userId: user.id,
+      userId: auth.user.id,
       status: 'active',
       createdAt: now,
       updatedAt: now,
@@ -113,26 +96,12 @@ export const createProject = action(
 // Delete project
 export const deleteProject = action(
   Effect.gen(function* () {
-    const { user } = yield* AuthUserService
+    const project = (yield* bound('project')) as Project
+    yield* authorize((a) => a.user.id === project.userId)
     const db = yield* DatabaseService
 
-    const { id } = yield* validateRequest(S.Struct({ id: S.UUID }))
-
-    // Verify ownership and delete
-    const project = yield* Effect.tryPromise({
-      try: () =>
-        db.query.projects.findFirst({
-          where: and(eq(projects.id, id), eq(projects.userId, user.id)),
-        }),
-      catch: (error) => new Error(String(error)),
-    })
-
-    if (!project) {
-      return yield* notFound('Project')
-    }
-
     yield* dbMutation(db, async (db) => {
-      await db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, user.id)))
+      await db.delete(projects).where(eq(projects.id, project.id))
     })
 
     return yield* redirect('/projects')
