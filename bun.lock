@@ -8,7 +8,7 @@
         "better-auth": "^1.4.10",
         "drizzle-orm": "^0.41.0",
         "effect": "^3.19.14",
-        "honertia": "^0.1.13",
+        "honertia": "^0.1.14",
         "hono": "^4.11.3",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
@@ -445,7 +445,7 @@
 
     "hasown": ["hasown@2.0.2", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ=="],
 
-    "honertia": ["honertia@0.1.14", "", { "dependencies": { "effect": "^3.12.0" }, "peerDependencies": { "better-auth": ">=1.0.0", "drizzle-orm": ">=0.30.0", "hono": ">=4.0.0" }, "optionalPeers": ["better-auth", "drizzle-orm"] }, "sha512-DZbNkBdxEx+LFIGvzKa81WAiykGT5DDdrb0Vqj5IDYb5dhKA/ZdFN+GNZOtS11FWFDBMB3PImAh0yYHRCyW2Vg=="],
+    "honertia": ["honertia@0.1.15", "", { "dependencies": { "effect": "^3.12.0" }, "peerDependencies": { "better-auth": ">=1.0.0", "drizzle-orm": ">=0.30.0", "hono": ">=4.0.0" }, "optionalPeers": ["better-auth", "drizzle-orm"] }, "sha512-MPm67b8aOMdsyuAA3yPmauGLKpAPHyvK6b2alTxJBzvqUuErP6D7sx8kWAEQc3Rssag33W2VmX+VWqUma0MO8g=="],
 
     "hono": ["hono@4.11.3", "", {}, "sha512-PmQi306+M/ct/m5s66Hrg+adPnkD5jiO6IjA7WhWw0gSBSo1EcRegwuI1deZ+wd5pzCGynCcn2DprnE4/yEV4w=="],
 

@@ -13,7 +13,7 @@ import {
   nullableString,
 } from 'honertia/effect'
 import { eq } from 'drizzle-orm'
-import { projects, type NewProject, type Project } from '~/db/schema'
+import { projects, type NewProject } from '~/db/schema'
 
 
 // Dashboard
@@ -96,7 +96,7 @@ export const createProject = action(
 // Delete project
 export const deleteProject = action(
   Effect.gen(function* () {
-    const project = (yield* bound('project')) as Project
+    const project = yield* bound('project')
     yield* authorize((a) => a.user.id === project.userId)
     const db = yield* DatabaseService
 
