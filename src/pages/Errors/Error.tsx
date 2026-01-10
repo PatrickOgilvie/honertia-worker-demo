@@ -5,6 +5,7 @@ import type { PageProps } from '~/types'
 interface ErrorProps {
   status?: number
   message?: string
+  hint?: string
 }
 
 export default function ErrorPage() {
@@ -22,6 +23,11 @@ export default function ErrorPage() {
           <h1 className="mt-3 text-3xl font-bold text-gray-900">Something went wrong</h1>
         </div>
         <p className="text-gray-600 max-w-xl">{message}</p>
+        {props.hint && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 max-w-xl">
+            <p className="text-sm text-amber-800">{props.hint}</p>
+          </div>
+        )}
         <div className="space-x-4">
           <Link
             href="/"

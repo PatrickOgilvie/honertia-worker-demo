@@ -1,9 +1,22 @@
 import type { PageProps as InertiaPageProps } from '@inertiajs/core'
 
-
 import type { Database } from '~/db/db'
 import type { Auth } from '~/lib/auth'
 import * as schema from '~/db/schema'
+
+// Hono app environment types
+export type Bindings = {
+  DB: D1Database
+  BETTER_AUTH_SECRET: string
+  ENVIRONMENT?: string
+}
+
+export type Variables = {
+  db: Database
+  auth: Auth
+}
+
+export type AppEnv = { Bindings: Bindings; Variables: Variables }
 
 declare module 'honertia/effect' {
   interface HonertiaDatabaseType {
@@ -12,6 +25,9 @@ declare module 'honertia/effect' {
   }
   interface HonertiaAuthType {
     type: Auth
+  }
+  interface HonertiaBindingsType {
+    type: Bindings
   }
 }
 

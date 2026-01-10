@@ -4,32 +4,10 @@ import { shareAuthMiddleware } from 'honertia/auth'
 import { createDb } from './db/db'
 import { createAuth } from './lib/auth'
 import { registerRoutes } from './routes'
+import * as schema from './db/schema'
+import type { AppEnv } from './types'
 
-type Bindings = {
-  DB: D1Database
-  BETTER_AUTH_SECRET: string
-  ENVIRONMENT?: string
-}
-
-type Variables = {
-  db: ReturnType<typeof createDb>
-  auth: ReturnType<typeof createAuth>
-}
-
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
-
-// Middleware to set up db and auth
-app.use('*', async (c, next) => {
-  const db = createDb(c.env.DB)
-  c.set('db', db)
-  c.set('auth', createAuth({
-      db,
-      secret: c.env.BETTER_AUTH_SECRET,
-      baseURL: new URL(c.req.url).origin,
-    })
-  )
-  await next()
-})
+const app = new Hono<AppEnv>()
 
 // Import manifest - generated at build time (may not exist in dev)
 let manifest: Record<string, { file: string; css?: string[] }> = {}
@@ -44,8 +22,15 @@ const entry = manifest['src/main.tsx'] || { file: '', css: [] }
 
 app.use(
   '*',
-  setupHonertia({
+  setupHonertia<AppEnv>({
     honertia: {
+      database: (c) => createDb(c.env.DB),
+      auth: (c) => createAuth({
+        db: c.var.db,
+        secret: c.env.BETTER_AUTH_SECRET,
+        baseURL: new URL(c.req.url).origin,
+      }),
+      schema,
       version: assetVersion,
       render: createTemplate((ctx) => {
         const isDev = ctx.env.ENVIRONMENT !== 'production'
