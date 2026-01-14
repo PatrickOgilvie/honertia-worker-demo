@@ -1,21 +1,16 @@
-import { Hono } from 'hono'
 import { setupHonertia, createTemplate, createVersion, vite, registerErrorHandlers } from 'honertia'
 import { shareAuthMiddleware } from 'honertia/auth'
-import { createDb } from './db/db'
-import { createAuth } from './lib/auth'
 import { registerRoutes } from './routes'
+import { createAuth } from './lib/auth'
 import * as schema from './db/schema'
 import type { AppEnv } from './types'
+import { createDb } from './db/db'
+import { Hono } from 'hono'
 
 const app = new Hono<AppEnv>()
 
-// Import manifest - generated at build time (may not exist in dev)
-let manifest: Record<string, { file: string; css?: string[] }> = {}
-try {
-  manifest = (await import('../dist/manifest.json')).default
-} catch {
-  // Manifest doesn't exist in dev mode
-}
+// @ts-ignore - Generated at build time
+import manifest from '../dist/manifest.json'
 
 const assetVersion = createVersion(manifest)
 const entry = manifest['src/main.tsx'] || { file: '', css: [] }
