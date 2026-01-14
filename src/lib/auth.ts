@@ -25,7 +25,7 @@ export function createAuth(config: AuthConfig) {
     trustedOrigins: config.trustedOrigins
       ? config.trustedOrigins.split(',')
       : [],
-    baseURL: config.baseURL,
+    baseURL: config.trustedOrigins,
     emailAndPassword: {
       enabled: true,
     },
