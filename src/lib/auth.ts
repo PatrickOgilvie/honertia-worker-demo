@@ -7,6 +7,7 @@ export interface AuthConfig {
   db: Database
   secret: string
   baseURL: string
+  trustedOrigins?: string
 }
 
 export function createAuth(config: AuthConfig) {
@@ -21,6 +22,9 @@ export function createAuth(config: AuthConfig) {
       },
     }),
     secret: config.secret,
+    trustedOrigins: config.trustedOrigins
+      ? config.trustedOrigins.split(',')
+      : [],
     baseURL: config.baseURL,
     emailAndPassword: {
       enabled: true,

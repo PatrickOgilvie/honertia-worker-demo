@@ -8,6 +8,7 @@ import * as schema from '~/db/schema'
 export type Bindings = {
   DB: D1Database
   BETTER_AUTH_SECRET: string
+  BETTER_AUTH_TRUSTED_ORIGINS?: string
   ENVIRONMENT?: string
 }
 

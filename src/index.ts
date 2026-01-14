@@ -24,6 +24,7 @@ app.use(
         db: c.var.db,
         secret: c.env.BETTER_AUTH_SECRET,
         baseURL: new URL(c.req.url).origin,
+        trustedOrigins: c.env.BETTER_AUTH_TRUSTED_ORIGINS,
       }),
       schema,
       version: assetVersion,
