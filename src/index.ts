@@ -1,5 +1,4 @@
 import { setupHonertia, createTemplate, createVersion, vite, registerErrorHandlers } from 'honertia'
-import { shareAuthMiddleware } from 'honertia/auth'
 import { registerRoutes } from './routes'
 import { createAuth } from './lib/auth'
 import * as schema from './db/schema'
@@ -38,7 +37,6 @@ app.use(
         }
       }),
     },
-    middleware: [shareAuthMiddleware()],
   })
 )
 
