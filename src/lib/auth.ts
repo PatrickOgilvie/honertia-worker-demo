@@ -8,17 +8,13 @@ export interface AuthConfig {
   secret: string
   baseURL: string
   trustedOrigins?: string
+  environment?: string
 }
 
 export function createAuth(config: AuthConfig) {
-  // Extract root domain for cross-subdomain cookies
-  // e.g., "4000-project-xxx.localhost" -> ".localhost"
-  const url = new URL(config.baseURL)
-  const hostParts = url.hostname.split('.')
-  // Only enable cross-subdomain cookies when there's a subdomain
-  const rootDomain = hostParts.length > 1
-    ? `.${hostParts.slice(-1)[0]}`
-    : null
+
+  const isDev = config.environment !== 'production'
+
   return betterAuth({
     database: drizzleAdapter(config.db, {
       provider: 'sqlite',
@@ -30,24 +26,19 @@ export function createAuth(config: AuthConfig) {
       },
     }),
     secret: config.secret,
+    baseURL: config.baseURL,
     trustedOrigins: config.trustedOrigins
       ? config.trustedOrigins.split(',')
       : [],
-    baseURL: config.baseURL,
     emailAndPassword: {
       enabled: true,
     },
-    session: {
-      cookieCache: {
-        enabled: true,
-        maxAge: 60 * 5, // 5 minutes
-      },
-    },
-    ...(rootDomain && {
+    ...(isDev && {
       advanced: {
-        crossSubDomainCookies: {
-          enabled: true,
-          domain: rootDomain,
+        defaultCookieAttributes: {
+          sameSite: 'none' as const,
+          secure: true,
+          httpOnly: true,
         },
       },
     }),
