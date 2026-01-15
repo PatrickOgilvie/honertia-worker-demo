@@ -44,6 +44,9 @@ app.use(
 registerRoutes(app)
 registerErrorHandlers(app, {
   component: 'Errors/Error',
+  showDevErrors: true,       // Show detailed errors in development
+  envKey: 'ENVIRONMENT',     // Env var to check
+  devValue: 'development',
 })
 
 export default app
