@@ -1,15 +1,7 @@
-import { Schema as S } from 'effect'
 import type { Hono } from 'hono'
-import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from 'honertia'
+import { showDashboard } from './actions/dashboard'
 import { loginUser, registerUser, logoutUser } from './actions/auth'
-import {
-  showDashboard,
-  listProjects,
-  showProject,
-  showCreateProject,
-  createProject,
-  deleteProject,
-} from './actions/projects'
+import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from 'honertia'
 
 export function registerRoutes(app: Hono<any>) {
   // Auth routes with unified config (pages + actions in one call)
@@ -21,18 +13,10 @@ export function registerRoutes(app: Hono<any>) {
     logoutAction: logoutUser,
   })
 
-  // Protected routes - dashboard and projects
+  // Protected routes - dashboard
   effectRoutes(app)
     .provide(RequireAuthLayer)
     .group((route) => {
       route.get('/', showDashboard)
-
-      route.prefix('/projects').group((route) => {
-        route.get('/', listProjects)
-        route.get('/create', showCreateProject)
-        route.post('/', createProject)
-        route.get('/{project}', showProject)
-        route.delete('/{project}', deleteProject)
-      })
     })
 }

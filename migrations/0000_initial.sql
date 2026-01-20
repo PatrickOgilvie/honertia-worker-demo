@@ -44,19 +44,7 @@ CREATE TABLE IF NOT EXISTS verifications (
   updated_at INTEGER NOT NULL
 );
 
--- Application tables
-CREATE TABLE IF NOT EXISTS projects (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  description TEXT,
-  status TEXT DEFAULT 'active',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id);
-CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);

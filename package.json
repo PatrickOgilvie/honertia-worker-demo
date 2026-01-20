@@ -16,19 +16,19 @@
     "deploy": "bun run build && bun run db:migrate && wrangler deploy"
   },
   "dependencies": {
-    "@inertiajs/react": "^2.3.8",
-    "better-auth": "^1.4.12",
+    "@inertiajs/react": "^2.3.11",
+    "better-auth": "^1.4.16",
     "drizzle-orm": "^0.41.0",
     "effect": "^3.19.14",
-    "honertia": "^0.1.25",
+    "honertia": "^0.1.32",
     "hono": "^4.11.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260113.0",
+    "@cloudflare/workers-types": "^4.20260120.0",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/react": "^19.2.8",
+    "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.1",
@@ -36,7 +36,7 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^6.4.1",
-    "wrangler": "^4.59.1"
+    "wrangler": "^4.59.3"
   },
   "deploy-button": {
     "bindings": {

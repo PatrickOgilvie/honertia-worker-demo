@@ -12,9 +12,6 @@ export interface AuthConfig {
 }
 
 export function createAuth(config: AuthConfig) {
-
-  const isDev = config.environment !== 'production'
-
   return betterAuth({
     database: drizzleAdapter(config.db, {
       provider: 'sqlite',
@@ -32,16 +29,7 @@ export function createAuth(config: AuthConfig) {
       : [],
     emailAndPassword: {
       enabled: true,
-    },
-    ...(isDev && {
-      advanced: {
-        defaultCookieAttributes: {
-          sameSite: 'none' as const,
-          secure: true,
-          httpOnly: true,
-        },
-      },
-    }),
+    }
   })
 }
 

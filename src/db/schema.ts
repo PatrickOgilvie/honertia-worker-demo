@@ -50,19 +50,4 @@ export const verifications = sqliteTable('verifications', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
-// Application tables
-export const projects = sqliteTable('projects', {
-  id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  description: text('description'),
-  status: text('status').default('active'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
-
 export type User = typeof users.$inferSelect
-export type Project = typeof projects.$inferSelect
-export type NewProject = typeof projects.$inferInsert

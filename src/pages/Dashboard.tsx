@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react'
+import { usePage } from '@inertiajs/react'
 import Layout from '~/components/Layout'
 import type { PageProps } from '~/types'
 
@@ -18,14 +18,6 @@ export default function Dashboard() {
             server-driven SPA architecture on Cloudflare Workers with D1
             database and better-auth authentication.
           </p>
-          <div className="space-y-4">
-            <Link
-              href="/projects"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              View Projects
-            </Link>
-          </div>
         </div>
       </div>
 

@@ -65,16 +65,12 @@ src/
 │   └── db.ts             # D1 database client
 │   └── schema.ts         # Drizzle schema
 ├── actions/
-│   └── projects.ts       # Project CRUD handlers
+│   └── dashboard.ts       # CRUD Action handlers
 └── pages/
     ├── Dashboard.tsx     # Dashboard page
-    ├── Auth/
-    │   ├── Login.tsx     # Login page
-    │   └── Register.tsx  # Registration page
-    └── Projects/
-        ├── Index.tsx     # Project list
-        ├── Show.tsx      # Project details
-        └── Create.tsx    # Create project form
+    └── Auth/
+        ├── Login.tsx     # Login page
+        └── Register.tsx  # Registration page
 ```
 
 ## Deployment
