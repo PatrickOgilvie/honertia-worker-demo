@@ -1,4 +1,6 @@
 import { setupHonertia, createTemplate, createVersion, vite, registerErrorHandlers } from 'honertia'
+import { EffectErrorObserverService, type EffectErrorEvent } from 'honertia/effect'
+import { Effect, Layer } from 'effect'
 import { registerRoutes } from './routes'
 import { createAuth } from './lib/auth'
 import * as schema from './db/schema'
@@ -37,6 +39,22 @@ app.use(
           head: isDev ? vite.hmrHead() : '',
         }
       }),
+    },
+    effect: {
+      services: () =>
+        Layer.succeed(EffectErrorObserverService, {
+          observe: (event: EffectErrorEvent) =>
+            Effect.sync(() => {
+              // Swap this for Sentry / PostHog / your telemetry sink.
+              console.error('[honertia:error]', {
+                source: event.source,
+                handling: event.handling,
+                kind: event.kind,
+                code: event.structured?.code,
+                error: event.error,
+              })
+            }),
+        }),
     },
   })
 )

@@ -19,19 +19,6 @@ export type Variables = {
 
 export type AppEnv = { Bindings: Bindings; Variables: Variables }
 
-declare module 'honertia/effect' {
-  interface HonertiaDatabaseType {
-    type: Database
-    schema: typeof schema
-  }
-  interface HonertiaAuthType {
-    type: Auth
-  }
-  interface HonertiaBindingsType {
-    type: Bindings
-  }
-}
-
 export interface AuthUser {
   user: {
     id: string
@@ -51,6 +38,22 @@ export interface AuthUser {
     updatedAt: Date
     ipAddress: string | null
     userAgent: string | null
+  }
+}
+
+declare module 'honertia/effect' {
+  interface HonertiaDatabaseType {
+    type: Database
+    schema: typeof schema
+  }
+  interface HonertiaAuthType {
+    type: Auth
+  }
+  interface HonertiaBindingsType {
+    type: Bindings
+  }
+  interface HonertiaAuthUserType {
+    type: AuthUser
   }
 }
 

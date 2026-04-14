@@ -8,6 +8,8 @@
     "dev:vite": "vite --port 5173",
     "dev:worker": "wrangler dev --port 8787",
     "build": "vite build",
+    "routes": "honertia routes",
+    "check": "honertia check",
     "db:create": "wrangler d1 create honertia-demo-db",
     "db:migrate": "wrangler d1 migrations apply DB --remote",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
@@ -16,27 +18,27 @@
     "deploy": "bun run build && bun run db:migrate && wrangler deploy"
   },
   "dependencies": {
-    "@inertiajs/react": "^2.3.11",
-    "better-auth": "^1.4.17",
+    "@inertiajs/react": "^2.3.21",
+    "better-auth": "^1.6.3",
     "drizzle-orm": "^0.41.0",
-    "effect": "^3.19.14",
-    "honertia": "^0.1.32",
-    "hono": "^4.11.4",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "effect": "^3.21.0",
+    "honertia": "^0.1.44",
+    "hono": "^4.12.12",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260120.0",
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/react": "^19.2.9",
+    "@cloudflare/workers-types": "^4.20260414.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.1",
-    "drizzle-kit": "^0.31.8",
-    "tailwindcss": "^4.1.18",
+    "drizzle-kit": "^0.31.10",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
-    "vite": "^6.4.1",
-    "wrangler": "^4.59.3"
+    "vite": "^6.4.2",
+    "wrangler": "^4.82.2"
   },
   "deploy-button": {
     "bindings": {
