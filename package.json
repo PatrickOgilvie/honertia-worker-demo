@@ -19,26 +19,26 @@
   },
   "dependencies": {
     "@inertiajs/react": "^2.3.21",
-    "better-auth": "^1.6.3",
+    "better-auth": "^1.6.9",
     "drizzle-orm": "^0.41.0",
-    "effect": "^3.21.0",
-    "honertia": "^0.1.44",
-    "hono": "^4.12.12",
+    "effect": "^3.21.2",
+    "honertia": "^0.1.45",
+    "hono": "^4.12.15",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260414.1",
-    "@tailwindcss/vite": "^4.2.2",
+    "@cloudflare/workers-types": "^4.20260426.1",
+    "@tailwindcss/vite": "^4.2.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.10",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.2.4",
     "typescript": "^5.9.3",
     "vite": "^6.4.2",
-    "wrangler": "^4.82.2"
+    "wrangler": "^4.85.0"
   },
   "deploy-button": {
     "bindings": {

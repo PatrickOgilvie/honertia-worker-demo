@@ -5,6 +5,11 @@ import { createRoot } from 'react-dom/client'
 const pages = import.meta.glob('./pages/**/*.tsx')
 
 createInertiaApp({
+  defaults: {
+    future: {
+      useScriptElementForInitialPage: true,
+    },
+  },
   resolve: (name) => {
     const page = pages[`./pages/${name}.tsx`]
     if (!page) {
