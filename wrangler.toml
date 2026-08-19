@@ -1,4 +1,4 @@
-name = "honertia-worker-demo"
+name = "popcomputer-web-demo"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
@@ -8,7 +8,7 @@ directory = "dist"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "honertia-demo-db"
+database_name = "popcomputer-web-demo-db"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 

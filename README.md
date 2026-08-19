@@ -1,23 +1,23 @@
-# Honertia Worker Demo
+# @popcomputer/web Demo
 
-A demo application showcasing [Honertia](https://github.com/PatrickOgilvie/honertia) - an Inertia.js-style adapter for Hono with Effect.ts integration, running on Cloudflare Workers with D1 database and better-auth authentication.
+A demo application showcasing [@popcomputer/web](https://github.com/PatrickOgilvie/popcomputer-web) - an Inertia.js-style adapter for Hono with Effect v4 integration, running on Cloudflare Workers with D1 database and Better Auth authentication.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/PatrickOgilvie/honertia-worker-demo)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/PatrickOgilvie/popcomputer-web-demo)
 
 ## Features
 
-- **Server-driven SPA** - Honertia enables server-side routing with client-side navigation
+- **Server-driven SPA** - @popcomputer/web enables server-side routing with client-side navigation
 - **D1 Database** - SQLite-compatible database running on Cloudflare's edge
-- **Authentication** - Full user registration and login with better-auth
-- **Effect.ts** - Type-safe error handling and dependency injection
+- **Authentication** - Full user registration and login with Better Auth
+- **Effect v4** - Type-safe error handling and dependency injection
 - **React + Tailwind** - Modern frontend stack
 
 ## Tech Stack
 
 - [Hono](https://hono.dev) - Fast web framework for Cloudflare Workers
-- [Honertia](https://github.com/PatrickOgilvie/honertia) - Inertia.js adapter for Hono
+- [@popcomputer/web](https://github.com/PatrickOgilvie/popcomputer-web) - Inertia.js adapter for Hono
 - [Effect](https://effect.website) - TypeScript effect system
-- [better-auth](https://www.better-auth.com) - Authentication library
+- [Better Auth](https://www.better-auth.com) - Authentication library
 - [Drizzle ORM](https://orm.drizzle.team) - TypeScript ORM for D1
 - [React](https://react.dev) + [Inertia.js](https://inertiajs.com)
 - [Tailwind CSS](https://tailwindcss.com)
@@ -60,12 +60,12 @@ src/
 ├── main.tsx              # React/Inertia client entry
 ├── styles.css            # Tailwind CSS
 ├── lib/
-│   └── auth.ts           # better-auth configuration
+│   └── auth.ts           # Better Auth configuration
 ├── db/
-│   └── db.ts             # D1 database client
+│   ├── db.ts             # D1 database client
 │   └── schema.ts         # Drizzle schema
 ├── actions/
-│   └── dashboard.ts       # CRUD Action handlers
+│   └── dashboard.ts      # Dashboard action
 └── pages/
     ├── Dashboard.tsx     # Dashboard page
     └── Auth/
@@ -104,4 +104,4 @@ For subsequent deploys, just run `bun run deploy`.
 
 ## License
 
-MIT
+[MIT](LICENSE)

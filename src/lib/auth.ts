@@ -1,16 +1,20 @@
+import type { AuthBackgroundTasks } from '@popcomputer/web'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import type { Database } from '../db/db'
 import * as schema from '../db/schema'
 
+/** Configuration for the request-scoped Better Auth server. */
 export interface AuthConfig {
-  db: Database
-  secret: string
-  baseURL: string
-  trustedOrigins?: string
-  environment?: string
+  readonly db: Database
+  readonly secret: string
+  readonly baseURL: string
+  readonly trustedOrigins?: string
+  readonly environment?: string
+  readonly backgroundTasks: AuthBackgroundTasks
 }
 
+/** Creates a Better Auth server backed by the request's D1 database. */
 export function createAuth(config: AuthConfig) {
   return betterAuth({
     database: drizzleAdapter(config.db, {
@@ -27,10 +31,14 @@ export function createAuth(config: AuthConfig) {
     trustedOrigins: config.trustedOrigins
       ? config.trustedOrigins.split(',')
       : [],
+    advanced: {
+      backgroundTasks: config.backgroundTasks,
+    },
     emailAndPassword: {
       enabled: true,
-    }
+    },
   })
 }
 
+/** Better Auth server type produced by {@link createAuth}. */
 export type Auth = ReturnType<typeof createAuth>

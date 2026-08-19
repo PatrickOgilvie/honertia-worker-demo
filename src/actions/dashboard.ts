@@ -1,8 +1,5 @@
-import { Effect, Schema as S } from 'effect'
-import {
-  action,
-  render,
-} from 'honertia/effect'
+import { Effect } from 'effect'
+import { action, render } from '@popcomputer/web/effect'
 
 
 // Dashboard

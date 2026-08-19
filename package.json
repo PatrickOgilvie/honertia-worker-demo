@@ -1,16 +1,19 @@
 {
-  "name": "honertia-worker-demo",
-  "version": "1.0.0",
-  "description": "Demo app showcasing Honertia with D1 database and better-auth authentication on Cloudflare Workers",
+  "name": "popcomputer-web-demo",
+  "version": "1.0.0-rc.1",
+  "private": true,
+  "description": "Demo app showcasing @popcomputer/web with D1 database and Better Auth authentication on Cloudflare Workers",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"bun run dev:vite\" \"bun run dev:worker\"",
     "dev:vite": "vite --port 5173",
     "dev:worker": "wrangler dev --port 8787",
     "build": "vite build",
-    "routes": "honertia routes",
-    "check": "honertia check",
-    "db:create": "wrangler d1 create honertia-demo-db",
+    "routes": "bun node_modules/@popcomputer/web/dist/cli/bin.js routes --app src/index.ts",
+    "check": "bun node_modules/@popcomputer/web/dist/cli/bin.js check --app src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:create": "wrangler d1 create popcomputer-web-demo-db",
     "db:migrate": "wrangler d1 migrations apply DB --remote",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "secret:generate": "openssl rand -base64 32 | wrangler secret put BETTER_AUTH_SECRET",
@@ -19,10 +22,10 @@
   },
   "dependencies": {
     "@inertiajs/react": "^2.3.21",
-    "better-auth": "^1.6.9",
-    "drizzle-orm": "^0.41.0",
-    "effect": "^3.21.2",
-    "honertia": "^0.1.45",
+    "@popcomputer/web": "0.4.0-rc.1",
+    "better-auth": "1.6.25",
+    "drizzle-orm": "^0.45.2",
+    "effect": "4.0.0-rc.109",
     "hono": "^4.12.15",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
@@ -43,7 +46,7 @@
   "deploy-button": {
     "bindings": {
       "DB": {
-        "description": "D1 database for storing users and projects"
+        "description": "D1 database for Better Auth users and sessions"
       },
       "BETTER_AUTH_SECRET": {
         "description": "Secret key for authentication (any random string)"

@@ -1,4 +1,5 @@
 import type { PageProps as InertiaPageProps } from '@inertiajs/core'
+import { Schema as S } from 'effect'
 
 import type { Database } from '~/db/db'
 import type { Auth } from '~/lib/auth'
@@ -12,53 +13,54 @@ export type Bindings = {
   ENVIRONMENT?: string
 }
 
-export type Variables = {
-  db: Database
-  auth: Auth
-}
+export type AppEnv = { Bindings: Bindings }
 
-export type AppEnv = { Bindings: Bindings; Variables: Variables }
+/** Runtime schema for the Better Auth session supplied to authenticated effects. */
+export const AuthUser = S.Struct({
+  user: S.Struct({
+    id: S.String,
+    name: S.NullOr(S.String),
+    email: S.String,
+    emailVerified: S.Boolean,
+    image: S.NullOr(S.String),
+    createdAt: S.Date,
+    updatedAt: S.Date,
+  }),
+  session: S.Struct({
+    id: S.String,
+    userId: S.String,
+    expiresAt: S.Date,
+    token: S.String,
+    createdAt: S.Date,
+    updatedAt: S.Date,
+    ipAddress: S.optionalKey(S.NullOr(S.String)),
+    userAgent: S.optionalKey(S.NullOr(S.String)),
+  }),
+})
 
-export interface AuthUser {
-  user: {
-    id: string
-    name: string | null
-    email: string
-    emailVerified: boolean
-    image: string | null
-    createdAt: Date
-    updatedAt: Date
-  }
-  session: {
-    id: string
-    userId: string
-    expiresAt: Date
-    token: string
-    createdAt: Date
-    updatedAt: Date
-    ipAddress: string | null
-    userAgent: string | null
-  }
-}
+/** Parsed Better Auth session used by the application. */
+export interface AuthUser extends S.Schema.Type<typeof AuthUser> {}
 
-declare module 'honertia/effect' {
-  interface HonertiaDatabaseType {
+declare module '@popcomputer/web/effect' {
+  interface WebDatabaseType {
     type: Database
     schema: typeof schema
   }
-  interface HonertiaAuthType {
+  interface WebAuthType {
     type: Auth
   }
-  interface HonertiaBindingsType {
+  interface WebBindingsType {
     type: Bindings
   }
-  interface HonertiaAuthUserType {
+  interface WebAuthUserType {
     type: AuthUser
   }
 }
 
 export interface SharedProps {
-  auth: AuthUser | null
+  auth: {
+    user: Pick<AuthUser['user'], 'id' | 'name' | 'email'> | null
+  }
   errors?: Record<string, string>
 }
 

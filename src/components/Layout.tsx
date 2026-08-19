@@ -21,7 +21,7 @@ export default function Layout({ children, breadcrumbs = [] }: LayoutProps) {
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-xl font-semibold text-gray-900">
-                Honertia Demo
+                @popcomputer/web Demo
               </Link>
               {breadcrumbs.map((crumb, index) => (
                 <span key={index} className="flex items-center space-x-4">

@@ -14,9 +14,9 @@ export default function Dashboard() {
             Welcome, {userName}!
           </h2>
           <p className="text-gray-600 mb-6">
-            This is a demo application built with Honertia, showcasing
+            This is a demo application built with @popcomputer/web, showcasing
             server-driven SPA architecture on Cloudflare Workers with D1
-            database and better-auth authentication.
+            database and Better Auth authentication.
           </p>
         </div>
       </div>
@@ -28,7 +28,7 @@ export default function Dashboard() {
               Framework
             </dt>
             <dd className="mt-1 text-2xl font-semibold text-gray-900">
-              Honertia
+              @popcomputer/web
             </dd>
           </div>
         </div>

@@ -1,9 +1,11 @@
 import type { Hono } from 'hono'
 import { showDashboard } from './actions/dashboard'
 import { loginUser, registerUser, logoutUser } from './actions/auth'
-import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from 'honertia'
+import { effectRoutes, effectAuthRoutes, RequireAuthLayer } from '@popcomputer/web/effect'
+import type { AppEnv } from './types'
 
-export function registerRoutes(app: Hono<any>) {
+/** Registers authentication endpoints and the protected dashboard route. */
+export function registerRoutes(app: Hono<AppEnv>) {
   // Auth routes with unified config (pages + actions in one call)
   effectAuthRoutes(app, {
     loginComponent: 'Auth/Login',
@@ -17,6 +19,6 @@ export function registerRoutes(app: Hono<any>) {
   effectRoutes(app)
     .provide(RequireAuthLayer)
     .group((route) => {
-      route.get('/', showDashboard)
+      route.get('/', showDashboard, { name: 'dashboard.show' })
     })
 }
