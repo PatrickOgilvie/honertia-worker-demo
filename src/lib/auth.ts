@@ -34,6 +34,11 @@ export function createAuth(config: AuthConfig) {
     advanced: {
       backgroundTasks: config.backgroundTasks,
     },
+    // The demo has no reauthentication flow, so session management stays usable
+    // for the lifetime of an otherwise valid login.
+    session: {
+      freshAge: 0,
+    },
     emailAndPassword: {
       enabled: true,
     },

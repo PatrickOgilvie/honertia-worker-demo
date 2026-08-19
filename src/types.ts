@@ -4,6 +4,7 @@ import { Schema as S } from 'effect'
 import type { Database } from '~/db/db'
 import type { Auth } from '~/lib/auth'
 import * as schema from '~/db/schema'
+import type { projectRouteBindings } from '~/domain/project'
 
 // Hono app environment types
 export type Bindings = {
@@ -30,7 +31,7 @@ export const AuthUser = S.Struct({
     id: S.String,
     userId: S.String,
     expiresAt: S.Date,
-    token: S.String,
+    token: S.RedactedFromValue(S.String),
     createdAt: S.Date,
     updatedAt: S.Date,
     ipAddress: S.optionalKey(S.NullOr(S.String)),
@@ -55,6 +56,27 @@ declare module '@popcomputer/web/effect' {
   interface WebAuthUserType {
     type: AuthUser
   }
+  interface WebRouteBindingsType {
+    type: typeof projectRouteBindings
+  }
+}
+
+/** Public project lifecycle values rendered in the client. */
+export type ProjectVisibility = 'private' | 'public'
+
+/** Minimal project representation sent to collection pages. */
+export interface ProjectSummary {
+  readonly [key: string]: string
+  readonly id: string
+  readonly name: string
+  readonly description: string
+  readonly visibility: ProjectVisibility
+  readonly updatedAt: string
+}
+
+/** Project representation sent to detail and editing pages. */
+export interface ProjectDetail extends ProjectSummary {
+  readonly createdAt: string
 }
 
 export interface SharedProps {

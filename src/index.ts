@@ -7,11 +7,15 @@ import { Effect, Layer } from 'effect'
 import { registerRoutes } from './routes'
 import { createAuth } from './lib/auth'
 import * as schema from './db/schema'
+import { projectRouteBindings } from './domain/project'
 import { AuthUser, type AppEnv } from './types'
 import { createDb } from './db/db'
 import { Hono } from 'hono'
 
 const app = new Hono<AppEnv>()
+
+// Materialize namespace exports because the binding compiler inspects own data descriptors.
+const databaseSchema = { ...schema }
 
 // @ts-ignore - Generated at build time
 import manifest from '../dist/manifest.json'
@@ -53,7 +57,8 @@ setupWeb(app, {
       email: user.email,
     }),
   },
-  schema,
+  schema: databaseSchema,
+  bindings: projectRouteBindings,
   version: assetVersion,
   render: createTemplate((ctx) => {
     const isDev = ctx.env.ENVIRONMENT !== 'production'

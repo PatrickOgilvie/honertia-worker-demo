@@ -1,107 +1,109 @@
-import { Link, useForm } from '@inertiajs/react'
+import { Head, useForm } from '@inertiajs/react'
+import { useEffect, useRef } from 'react'
+import type { FormEvent } from 'react'
+
+import AuthShell from '~/components/AuthShell'
+import TextField from '~/components/TextField'
 
 export default function Register() {
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, clearErrors } = useForm({
     name: '',
     email: '',
     password: '',
   })
+  const formRef = useRef<HTMLFormElement>(null)
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  useEffect(() => {
+    if (Object.keys(errors).length === 0) return
+    formRef.current
+      ?.querySelector<HTMLInputElement>('[aria-invalid="true"]')
+      ?.focus()
+  }, [errors])
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     post('/register')
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link
-              href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              sign in to existing account
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="name" className="sr-only">
-                Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Full name"
-                value={data.name}
-                onChange={(e) => setData('name', e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={data.email}
-                onChange={(e) => setData('email', e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={data.password}
-                onChange={(e) => setData('password', e.target.value)}
-              />
-            </div>
-          </div>
+    <>
+      <Head title="Create account">
+        <meta name="theme-color" content="#f5f3ee" />
+      </Head>
+      <AuthShell
+        title="Create your demo account"
+        description="Explore protected routes, typed server actions, and edge-ready persistence."
+        alternatePrompt="Already have an account?"
+        alternateHref="/login"
+        alternateLabel="Sign in"
+      >
+        <form ref={formRef} className="auth-form" onSubmit={handleSubmit}>
+          <TextField
+            id="name"
+            name="name"
+            type="text"
+            label="Full name"
+            autoComplete="name"
+            required
+            value={data.name}
+            error={errors.name}
+            onChange={(event) => {
+              setData('name', event.target.value)
+              clearErrors('name')
+            }}
+          />
+          <TextField
+            id="email"
+            name="email"
+            type="email"
+            label="Email address"
+            autoComplete="email"
+            spellCheck={false}
+            required
+            value={data.email}
+            error={errors.email}
+            onChange={(event) => {
+              setData('email', event.target.value)
+              clearErrors('email')
+            }}
+          />
+          <TextField
+            id="password"
+            name="password"
+            type="password"
+            label="Password"
+            autoComplete="new-password"
+            required
+            value={data.password}
+            error={errors.password}
+            onChange={(event) => {
+              setData('password', event.target.value)
+              clearErrors('password')
+            }}
+          />
 
-          {errors.name && (
-            <p className="text-red-500 text-sm">{errors.name}</p>
-          )}
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email}</p>
-          )}
-          {errors.password && (
-            <p className="text-red-500 text-sm">{errors.password}</p>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={processing}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {processing ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={processing}
+            className="primary-button"
+            aria-busy={processing}
+          >
+            {processing ? (
+              <svg
+                className="button-spinner"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle cx="10" cy="10" r="7" />
+              </svg>
+            ) : null}
+            <span aria-live="polite">
+              {processing ? 'Creating account…' : 'Create account'}
+            </span>
+          </button>
         </form>
-      </div>
-    </div>
+      </AuthShell>
+    </>
   )
 }
