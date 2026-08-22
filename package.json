@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"bun run dev:vite\" \"bun run dev:worker\"",
+    "dev": "bun run build && concurrently \"bun run dev:vite\" \"bun run dev:worker\"",
     "dev:vite": "vite --port 5173",
     "dev:worker": "wrangler dev --port 8787",
     "build": "vite build",

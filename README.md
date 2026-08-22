@@ -80,23 +80,21 @@ Because this focused demo does not include a reauthentication screen, it explici
    cp .dev.vars.example .dev.vars
    ```
 
-3. Build the frontend assets:
-
-   ```bash
-   bun run build
-   ```
-
-4. Apply both local D1 migrations:
+3. Apply both local D1 migrations:
 
    ```bash
    bun run db:migrate:local
    ```
 
-5. Start Vite and Wrangler together:
+4. Start Vite and Wrangler together:
 
    ```bash
    bun run dev
    ```
+
+The development command first creates the production manifest and asset
+directory required by Wrangler, so it also works on a fresh checkout. Vite then
+serves live frontend changes during development.
 
 The Worker is available at <http://localhost:8787>. Vite serves development assets on port 5173.
 
