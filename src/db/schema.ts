@@ -12,18 +12,28 @@ export const users = sqliteTable('users', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
-export const sessions = sqliteTable('sessions', {
-  id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  token: text('token').notNull().unique(),
-  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+export const sessions = sqliteTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').notNull().unique(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [
+    index('idx_sessions_owner_created_id').on(
+      table.userId,
+      sql`${table.createdAt} DESC`,
+      sql`${table.id} DESC`
+    ),
+  ]
+)
 
 export const accounts = sqliteTable('accounts', {
   id: text('id').primaryKey(),
@@ -51,6 +61,22 @@ export const verifications = sqliteTable('verifications', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
+export const rateLimits = sqliteTable(
+  'rate_limits',
+  {
+    id: text('id').primaryKey(),
+    key: text('key').notNull().unique(),
+    count: integer('count').notNull(),
+    lastRequest: integer('last_request').notNull(),
+  },
+  (table) => [
+    index('idx_rate_limits_last_request').on(
+      table.lastRequest,
+      table.id
+    ),
+  ]
+)
+
 // Application tables
 export const projects = sqliteTable(
   'projects',
@@ -64,12 +90,20 @@ export const projects = sqliteTable(
     visibility: text('visibility', { enum: ['private', 'public'] })
       .notNull()
       .default('private'),
+    revision: integer('revision').notNull().default(1),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+    deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   (table) => [
     index('idx_projects_user_id').on(table.userId),
     index('idx_projects_updated_at').on(table.updatedAt),
+    index('idx_projects_owner_active_order').on(
+      table.userId,
+      table.deletedAt,
+      sql`${table.updatedAt} DESC`,
+      sql`${table.id} DESC`
+    ),
     check('projects_name_length', sql`length(${table.name}) BETWEEN 1 AND 100`),
     check(
       'projects_description_length',
@@ -78,6 +112,14 @@ export const projects = sqliteTable(
     check(
       'projects_visibility',
       sql`${table.visibility} IN ('private', 'public')`
+    ),
+    check(
+      'projects_revision',
+      sql`${table.revision} BETWEEN 1 AND 9007199254740991`
+    ),
+    check(
+      'projects_retired_state',
+      sql`${table.deletedAt} IS NULL OR (${table.visibility} = 'private' AND ${table.name} = '(deleted)' AND ${table.description} = '')`
     ),
   ]
 )

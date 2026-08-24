@@ -11,17 +11,23 @@ import { projectRouteBindings } from './domain/project'
 import { AuthUser, type AppEnv } from './types'
 import { createDb } from './db/db'
 import { Hono } from 'hono'
+import { runtimeConfigMiddleware } from '~/runtime/runtime-config'
+import { makeRequestCancellationLayer } from '~/runtime/request-cancellation'
+import { makeRawRequestLayer } from '~/http/bounded-request-body'
+import { noStoreResponse } from '~/http/no-store-response'
 
 const app = new Hono<AppEnv>()
+
+app.use('*', noStoreResponse)
+app.use('*', runtimeConfigMiddleware)
 
 // Materialize namespace exports because the binding compiler inspects own data descriptors.
 const databaseSchema = { ...schema }
 
-// @ts-ignore - Generated at build time
 import manifest from '../dist/manifest.json'
 
 const assetVersion = createVersion(manifest)
-const entry = manifest['src/main.tsx'] ?? { file: '', css: [] }
+const entry = manifest['src/main.tsx']
 
 const observeEffectError = Effect.fn('PopcomputerWebDemo.observeEffectError')(
   function* (event: EffectErrorEvent) {
@@ -30,9 +36,8 @@ const observeEffectError = Effect.fn('PopcomputerWebDemo.observeEffectError')(
         source: event.source,
         handling: event.handling,
         kind: event.kind,
-        code: event.structured?.code,
-        errorType:
-          event.error instanceof Error ? event.error.name : typeof event.error,
+        hasStructuredError: event.structured !== undefined,
+        errorType: event.error instanceof Error ? 'Error' : typeof event.error,
       })
     })
   }
@@ -44,11 +49,11 @@ setupWeb(app, {
     client: (c, { db, backgroundTasks }) =>
       createAuth({
         db,
-        secret: c.env.BETTER_AUTH_SECRET,
-        baseURL: new URL(c.req.url).origin,
-        trustedOrigins: c.env.BETTER_AUTH_TRUSTED_ORIGINS,
-        environment: c.env.ENVIRONMENT,
+        secret: c.var.runtimeConfig.authSecret,
+        baseURL: c.var.runtimeConfig.appOrigin,
+        trustedOrigins: c.var.runtimeConfig.trustedOrigins,
         backgroundTasks,
+        mode: c.var.runtimeConfig.mode,
       }),
     session: AuthUser,
     share: ({ user }) => ({
@@ -61,19 +66,34 @@ setupWeb(app, {
   bindings: projectRouteBindings,
   version: assetVersion,
   render: createTemplate((ctx) => {
-    const isDev = ctx.env.ENVIRONMENT !== 'production'
+    const config = ctx.var.runtimeConfig
+    const isDev = config.mode === 'development'
+    if (isDev) {
+      const vitePort = config.vitePort
+      return {
+        title: '@popcomputer/web Demo',
+        scripts: [vite.script('/src/main.tsx', vitePort)],
+        styles: [],
+        head: vite.hmrHead(vitePort),
+      }
+    }
+
     return {
       title: '@popcomputer/web Demo',
-      scripts: isDev ? [vite.script()] : [`/${entry.file}`],
-      styles: isDev ? [] : (entry.css ?? []).map((asset: string) => `/${asset}`),
-      head: isDev ? vite.hmrHead() : '',
+      scripts: [`/${entry.file}`],
+      styles: (entry.css ?? []).map((asset: string) => `/${asset}`),
+      head: '',
     }
   }),
   effect: {
-    services: () =>
-      Layer.succeed(EffectErrorObserverService, {
-        observe: observeEffectError,
-      }),
+    services: (c) =>
+      Layer.mergeAll(
+        Layer.succeed(EffectErrorObserverService, {
+          observe: observeEffectError,
+        }),
+        makeRequestCancellationLayer(c.req.raw.signal),
+        makeRawRequestLayer(c.req.raw)
+      ),
   },
   security: {
     verifyOrigin: {},

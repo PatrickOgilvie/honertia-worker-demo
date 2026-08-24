@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react'
 
 import Layout from '~/components/Layout'
 import ProjectVisibilityBadge from '~/components/ProjectVisibilityBadge'
-import type { ProjectSummary } from '~/types'
+import type { ProjectSummary } from '~/presentation/project'
 
 interface ProjectsIndexProps {
   readonly projects: ReadonlyArray<ProjectSummary>

@@ -1,4 +1,4 @@
-import type { ProjectVisibility } from '~/types'
+import type { ProjectVisibility } from '~/domain/project'
 
 interface ProjectVisibilityBadgeProps {
   readonly visibility: ProjectVisibility

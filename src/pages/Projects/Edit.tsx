@@ -5,29 +5,34 @@ import type { FormEvent } from 'react'
 import Layout from '~/components/Layout'
 import ProjectFormFields from '~/components/ProjectFormFields'
 import type { ProjectFormValues } from '~/components/ProjectFormFields'
-import type { ProjectDetail } from '~/types'
+import type { ProjectDetail } from '~/presentation/project'
 
 interface EditProjectProps {
   readonly project: ProjectDetail
 }
 
-/** Updates an owner-bound project through a strict Effect action. */
+interface UpdateProjectFormValues extends ProjectFormValues {
+  readonly expectedRevision: number
+}
+
+/** Updates an owner-scoped project through a strict Effect action. */
 export default function EditProject({ project }: EditProjectProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const { data, setData, put, processing, errors, clearErrors } =
-    useForm<ProjectFormValues>({
+    useForm<UpdateProjectFormValues>({
       name: project.name,
       description: project.description,
       visibility: project.visibility,
+      expectedRevision: project.revision,
     })
 
   useEffect(() => {
     if (Object.keys(errors).length === 0) return
-    formRef.current
-      ?.querySelector<HTMLElement>(
+    const target =
+      formRef.current?.querySelector<HTMLElement>(
         'input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"]'
-      )
-      ?.focus()
+      ) ?? formRef.current?.querySelector<HTMLElement>('[role="alert"]')
+    target?.focus()
   }, [errors])
 
   function updateField(field: keyof ProjectFormValues, value: string) {
@@ -68,11 +73,11 @@ export default function EditProject({ project }: EditProjectProps) {
       >
         <div className="content-narrow">
           <header className="page-heading">
-            <p className="eyebrow">Bound model update</p>
+            <p className="eyebrow">Owner-scoped update</p>
             <h1>Edit project</h1>
             <p>
-              Route-model binding resolves this record and verifies ownership
-              before the update workflow runs.
+              The project service resolves this record within your owner scope
+              before the strict update form is parsed.
             </p>
           </header>
 
@@ -82,11 +87,27 @@ export default function EditProject({ project }: EditProjectProps) {
             noValidate
             onSubmit={handleSubmit}
           >
+            {errors.expectedRevision ? (
+              <div className="form-conflict" role="alert" tabIndex={-1}>
+                <p>{errors.expectedRevision}</p>
+                <Link
+                  href={`/projects/${encodeURIComponent(project.id)}/edit`}
+                  className="secondary-link"
+                >
+                  Reload latest version
+                </Link>
+              </div>
+            ) : null}
             <ProjectFormFields
               data={data}
               errors={errors}
               disabled={processing}
               onChange={updateField}
+            />
+            <input
+              type="hidden"
+              name="expectedRevision"
+              value={data.expectedRevision}
             />
 
             <div className="form-actions">

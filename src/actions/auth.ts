@@ -1,34 +1,59 @@
-import { Schema as S } from 'effect'
+import { Effect, Option, Redacted, Schema as S } from 'effect'
 import {
-  betterAuthFormAction,
   betterAuthLogoutAction,
   type BetterAuthActionError,
 } from '@popcomputer/web/auth'
+import { AuthUserService } from '@popcomputer/web/effect'
+import { SessionLifecycle } from '~/application/session-lifecycle'
 import { requiredString, email } from '@popcomputer/web/schema'
+import { PasswordSecret } from '~/domain/auth-credentials'
+import { parseSessionActor } from '~/domain/session'
+import { revokeBeforeClearingCredentials } from '~/http/authoritative-logout'
+import {
+  callBetterAuthHandler,
+  defineBetterAuthStrictForm,
+} from '~/http/better-auth-form'
+import { toSessionHttpFailure } from '~/http/session-http'
 
 const LoginSchema = S.Struct({
   email,
-  password: requiredString,
+  password: PasswordSecret,
 })
 
 const RegisterSchema = S.Struct({
   name: requiredString,
   email,
-  password: requiredString,
+  password: PasswordSecret,
 })
+
+function credentialProviderRequest(
+  request: Request,
+  path: '/sign-in/email' | '/sign-up/email',
+  body: Record<string, string>
+): Request {
+  const headers = new Headers(request.headers)
+  headers.delete('content-length')
+  headers.set('content-type', 'application/json')
+
+  return new Request(new URL(`/api/auth${path}`, request.url), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
 
 const mapLoginError = (error: BetterAuthActionError): Record<string, string> => {
   switch (error.code) {
     case 'INVALID_EMAIL':
     case 'INVALID_EMAIL_OR_PASSWORD':
     case 'EMAIL_NOT_VERIFIED':
-      return { email: error.message || 'Invalid email or password' }
+      return { email: 'Invalid email or password' }
     case 'CROSS_SITE_NAVIGATION_LOGIN_BLOCKED':
     case 'INVALID_ORIGIN':
     case 'MISSING_OR_NULL_ORIGIN':
-      return { email: error.message || 'Request blocked. Please try again.' }
+      return { email: 'Request blocked. Please try again.' }
     default:
-      return { email: error.message || 'Unable to sign in. Please try again.' }
+      return { email: 'Unable to sign in. Please try again.' }
   }
 }
 
@@ -37,46 +62,82 @@ const mapRegisterError = (error: BetterAuthActionError): Record<string, string> 
     case 'INVALID_EMAIL':
     case 'USER_ALREADY_EXISTS':
     case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
-      return { email: error.message || 'Email is already in use' }
+      return { email: 'Email is already in use' }
     case 'INVALID_PASSWORD':
     case 'PASSWORD_TOO_SHORT':
     case 'PASSWORD_TOO_LONG':
-      return { password: error.message || 'Invalid password' }
+      return { password: 'Invalid password' }
     case 'CROSS_SITE_NAVIGATION_LOGIN_BLOCKED':
     case 'INVALID_ORIGIN':
     case 'MISSING_OR_NULL_ORIGIN':
-      return { email: error.message || 'Request blocked. Please try again.' }
+      return { email: 'Request blocked. Please try again.' }
     default:
-      return { email: error.message || 'Unable to register. Please try again.' }
+      return { email: 'Unable to register. Please try again.' }
   }
 }
 
-export const loginUser = betterAuthFormAction({
+const loginForm = defineBetterAuthStrictForm({
+  name: 'Auth.login',
   schema: LoginSchema,
   errorComponent: 'Auth/Login',
   redirectTo: '/',
   errorMapper: mapLoginError,
   call: (auth, input, request) =>
-    auth.api.signInEmail({
-      body: { email: input.email, password: input.password },
-      request,
-      returnHeaders: true,
-    }),
+    callBetterAuthHandler(
+      auth,
+      credentialProviderRequest(request, '/sign-in/email', {
+        email: input.email,
+        password: Redacted.value(input.password),
+      })
+    ),
 })
 
-export const registerUser = betterAuthFormAction({
+const registerForm = defineBetterAuthStrictForm({
+  name: 'Auth.register',
   schema: RegisterSchema,
   errorComponent: 'Auth/Register',
   redirectTo: '/',
   errorMapper: mapRegisterError,
   call: (auth, input, request) =>
-    auth.api.signUpEmail({
-      body: { name: input.name, email: input.email, password: input.password },
-      request,
-      returnHeaders: true,
-    }),
+    callBetterAuthHandler(
+      auth,
+      credentialProviderRequest(request, '/sign-up/email', {
+        name: input.name,
+        email: input.email,
+        password: Redacted.value(input.password),
+      })
+    ),
 })
 
-export const logoutUser = betterAuthLogoutAction({
+export const loginUser = loginForm.handler
+
+export const registerUser = registerForm.handler
+
+const clearLogoutCookies = betterAuthLogoutAction({
   redirectTo: '/login',
 })
+
+const authoritativeLogout = Effect.fn('Auth.logout')(function* () {
+  const authenticated = yield* Effect.serviceOption(AuthUserService)
+
+  if (Option.isSome(authenticated)) {
+    const actor = yield* parseSessionActor(authenticated.value).pipe(
+      Effect.mapError(toSessionHttpFailure)
+    )
+    const lifecycle = yield* SessionLifecycle
+
+    const revoke = lifecycle
+      .endCurrent(actor)
+      .pipe(Effect.mapError(toSessionHttpFailure))
+
+    return yield* revokeBeforeClearingCredentials(
+      revoke,
+      clearLogoutCookies
+    )
+  }
+
+  return yield* clearLogoutCookies
+})()
+
+/** Revokes the server session before clearing browser credentials. */
+export const logoutUser = authoritativeLogout

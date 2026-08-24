@@ -1,7 +1,7 @@
 import { Head, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 
-import type { SessionSummary } from '~/actions/sessions'
+import type { SessionSummary } from '~/presentation/session'
 import ConfirmationDialog from '~/components/ConfirmationDialog'
 import Layout from '~/components/Layout'
 import type { PageProps } from '~/types'

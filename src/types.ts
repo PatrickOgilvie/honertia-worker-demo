@@ -5,21 +5,25 @@ import type { Database } from '~/db/db'
 import type { Auth } from '~/lib/auth'
 import * as schema from '~/db/schema'
 import type { projectRouteBindings } from '~/domain/project'
+import { SessionId, UserId } from '~/domain/identity'
+import { SessionToken } from '~/domain/auth-credentials'
+import type {
+  RuntimeConfig,
+  RuntimeConfigBindings,
+} from '~/runtime/runtime-config'
 
 // Hono app environment types
-export type Bindings = {
-  DB: D1Database
-  BETTER_AUTH_SECRET: string
-  BETTER_AUTH_TRUSTED_ORIGINS?: string
-  ENVIRONMENT?: string
-}
+export type Bindings = RuntimeConfigBindings & { readonly DB: D1Database }
 
-export type AppEnv = { Bindings: Bindings }
+export type AppEnv = {
+  readonly Bindings: Bindings
+  readonly Variables: { readonly runtimeConfig: RuntimeConfig }
+}
 
 /** Runtime schema for the Better Auth session supplied to authenticated effects. */
 export const AuthUser = S.Struct({
   user: S.Struct({
-    id: S.String,
+    id: UserId,
     name: S.NullOr(S.String),
     email: S.String,
     emailVerified: S.Boolean,
@@ -28,16 +32,22 @@ export const AuthUser = S.Struct({
     updatedAt: S.Date,
   }),
   session: S.Struct({
-    id: S.String,
-    userId: S.String,
+    id: SessionId,
+    userId: UserId,
     expiresAt: S.Date,
-    token: S.RedactedFromValue(S.String),
+    token: SessionToken,
     createdAt: S.Date,
     updatedAt: S.Date,
     ipAddress: S.optionalKey(S.NullOr(S.String)),
     userAgent: S.optionalKey(S.NullOr(S.String)),
   }),
-})
+}).check(
+  S.makeFilter((authUser) =>
+    authUser.user.id === authUser.session.userId
+      ? undefined
+      : 'Authenticated session owner does not match the user.'
+  )
+)
 
 /** Parsed Better Auth session used by the application. */
 export interface AuthUser extends S.Schema.Type<typeof AuthUser> {}
@@ -59,24 +69,6 @@ declare module '@popcomputer/web/effect' {
   interface WebRouteBindingsType {
     type: typeof projectRouteBindings
   }
-}
-
-/** Public project lifecycle values rendered in the client. */
-export type ProjectVisibility = 'private' | 'public'
-
-/** Minimal project representation sent to collection pages. */
-export interface ProjectSummary {
-  readonly [key: string]: string
-  readonly id: string
-  readonly name: string
-  readonly description: string
-  readonly visibility: ProjectVisibility
-  readonly updatedAt: string
-}
-
-/** Project representation sent to detail and editing pages. */
-export interface ProjectDetail extends ProjectSummary {
-  readonly createdAt: string
 }
 
 export interface SharedProps {

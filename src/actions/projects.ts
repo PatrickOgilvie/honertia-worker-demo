@@ -1,99 +1,163 @@
-import { and, desc, eq } from 'drizzle-orm'
-import { Effect, Result, Schema as S } from 'effect'
+import { Effect, Option, Schema as S } from 'effect'
 
 import {
   action,
-  asTrusted,
   authorize,
   bound,
-  DatabaseService,
-  dbMutation,
   HttpError,
-  httpError,
   json,
-  notFound,
+  NotFoundError,
+  prefersJson,
   redirect,
   render,
   renderWithErrors,
-  validateRequest,
+  RequestService,
 } from '@popcomputer/web/effect'
-import { projects } from '~/db/schema'
+import {
+  DeleteProjectOutcome,
+  type ProjectActor,
+  ProjectDeleteConflict,
+  ProjectIdConflict,
+  ProjectLifetimeLimitReached,
+  type ProjectMutationCancelled,
+  ProjectNotFound,
+  ProjectUpdateConflict,
+  type ProjectReadCancelled,
+  type ProjectReadFailure,
+  Projects,
+} from '~/application/projects'
 import {
   CreateProjectInput,
-  Project,
+  DeleteProjectInput,
+  ProjectParams,
   UpdateProjectInput,
 } from '~/domain/project'
+import {
+  defineStrictForm,
+  respondWithStrictFormErrors,
+} from '~/http/strict-form-route'
 import {
   ProjectApiIndexResponse,
   toProjectDetail,
   toProjectSummary,
+  toPublicProject,
 } from '~/presentation/project'
 
-const strictParsing = { onExcessProperty: 'error' } as const
-const bodyOnlyRequest = {
-  order: ['body'],
-  onConflict: 'error',
-} as const
+type ProjectActionFailure =
+  | ProjectIdConflict
+  | ProjectLifetimeLimitReached
+  | ProjectDeleteConflict
+  | ProjectMutationCancelled
+  | ProjectNotFound
+  | ProjectUpdateConflict
+  | ProjectReadCancelled
+  | ProjectReadFailure
 
-const boundProject = bound('project').pipe(
-  Effect.catchTag(
-    'BoundModelNotFound',
-    (cause) =>
-      new HttpError({
-        status: 500,
-        message: 'The project route binding was not available.',
-        cause,
+function toProjectActionFailure(
+  failure: ProjectActionFailure
+): HttpError | NotFoundError {
+  switch (failure._tag) {
+    case 'ProjectNotFound':
+      return NotFoundError.forResource('Project', failure.projectId)
+    case 'ProjectIdConflict':
+      return new HttpError({
+        status: 409,
+        message:
+          'That project identifier is already in use. Reload the form and try again.',
       })
+    case 'ProjectLifetimeLimitReached':
+      return new HttpError({
+        status: 409,
+        message: `This account has reached its lifetime limit of ${failure.limit} project identifiers.`,
+      })
+    case 'ProjectUpdateConflict':
+      return new HttpError({
+        status: 409,
+        message:
+          'This project changed after the edit form was opened. Reload it before saving again.',
+      })
+    case 'ProjectDeleteConflict':
+      return new HttpError({
+        status: 409,
+        message:
+          'This project changed after the page was opened. Reload it before deleting.',
+      })
+    case 'ProjectStoreUnavailable':
+      return new HttpError({
+        status: 503,
+        message: 'Project data is temporarily unavailable.',
+        body: { operation: failure.operation },
+      })
+    case 'InvalidStoredProject':
+    case 'UnexpectedProjectStoreResult':
+      return new HttpError({
+        status: 500,
+        message: 'Stored project data is invalid.',
+      })
+    case 'ProjectReadCancelled':
+      return new HttpError({
+        status: 408,
+        message: 'The project request was cancelled before it completed.',
+        body: { operation: failure.operation },
+      })
+    case 'ProjectMutationCancelled':
+      return new HttpError({
+        status: 408,
+        message: failure.mutationCommitted
+          ? 'The project change was saved before the request was cancelled. Reload before making another change.'
+          : 'The project request was cancelled before a change was saved.',
+        body: {
+          operation: failure.operation,
+          mutationCommitted: failure.mutationCommitted,
+        },
+      })
+  }
+}
+
+const currentProjectActor = authorize().pipe(
+  Effect.map(
+    (auth): ProjectActor => ({
+      userId: auth.user.id,
+    })
   )
 )
 
-function readProjects<A>(
-  operation: string,
-  run: () => PromiseLike<A>
-): Effect.Effect<A, HttpError> {
-  return Effect.tryPromise({
-    try: () => Promise.resolve(run()),
-    catch: (cause) =>
-      new HttpError({
-        status: 503,
-        message: 'Project data is temporarily unavailable.',
-        body: { operation },
-        cause,
-      }),
-  })
-}
+const projectIdFromRequest = Effect.gen(function* () {
+  const request = yield* RequestService
+  const rawProjectId = request.param('project')
 
-function parseProjects(
-  rows: unknown
-): Effect.Effect<ReadonlyArray<Project>, HttpError> {
-  return S.decodeUnknownEffect(S.Array(Project))(rows).pipe(
-    Effect.mapError(
-      (cause) =>
-        new HttpError({
-          status: 500,
-          message: 'Stored project data is invalid.',
-          cause,
-        })
+  return yield* S.decodeUnknownEffect(ProjectParams)({
+    project: rawProjectId,
+  }).pipe(
+    Effect.map((params) => params.project),
+    Effect.mapError(() =>
+      NotFoundError.forResource('Project', rawProjectId)
     )
   )
-}
+})
+
+const getOwnedProject = Effect.fn('Projects.httpGetOwned')(function* () {
+  const actor = yield* currentProjectActor
+  const projectId = yield* projectIdFromRequest
+  const projects = yield* Projects
+  const owned = yield* projects
+    .getOwned(actor, projectId)
+    .pipe(Effect.mapError(toProjectActionFailure))
+
+  return { actor, project: owned.project }
+})()
 
 /** Renders every project owned by the authenticated user. */
 export const showProjects = action(
   Effect.fn('Projects.index')(function* () {
-    const auth = yield* authorize()
-    const db = yield* DatabaseService
-    const rows = yield* readProjects('Projects.index', () =>
-      db
-        .select()
-        .from(projects)
-        .where(eq(projects.userId, auth.user.id))
-        .orderBy(desc(projects.updatedAt))
-    )
-    const ownedProjects = yield* parseProjects(rows)
+    const actor = yield* currentProjectActor
+    const projects = yield* Projects
+    const owned = yield* projects
+      .listOwned(actor)
+      .pipe(Effect.mapError(toProjectActionFailure))
 
     return yield* render('Projects/Index', {
-      projects: ownedProjects.map(toProjectSummary),
+      projects: owned.map(({ project }) => toProjectSummary(project)),
     })
   })()
 )
@@ -101,25 +165,21 @@ export const showProjects = action(
 /** Returns an authenticated, runtime-validated JSON project collection. */
 export const listProjectsApi = action(
   Effect.fn('Projects.apiList')(function* () {
-    const auth = yield* authorize()
-    const db = yield* DatabaseService
-    const rows = yield* readProjects('Projects.apiList', () =>
-      db
-        .select()
-        .from(projects)
-        .where(eq(projects.userId, auth.user.id))
-        .orderBy(desc(projects.updatedAt))
-    )
-    const ownedProjects = yield* parseProjects(rows)
+    const actor = yield* currentProjectActor
+    const projects = yield* Projects
+    const owned = yield* projects
+      .listOwned(actor)
+      .pipe(Effect.mapError(toProjectActionFailure))
     const payload = yield* S.decodeUnknownEffect(ProjectApiIndexResponse, {
       onExcessProperty: 'error',
-    })({ projects: ownedProjects.map(toProjectDetail) }).pipe(
+    })({
+      projects: owned.map(({ project }) => toProjectDetail(project)),
+    }).pipe(
       Effect.mapError(
-        (cause) =>
+        () =>
           new HttpError({
             status: 500,
             message: 'The project API response is invalid.',
-            cause,
           })
       )
     )
@@ -130,81 +190,34 @@ export const listProjectsApi = action(
 
 /** Renders the create-project form. */
 export const createProject = action(
-  Effect.fn('Projects.create')(function* () {
-    yield* authorize()
+  Effect.fn('Projects.createForm')(function* () {
+    yield* currentProjectActor
     return yield* render('Projects/Create')
   })()
 )
 
-/** Persists one strictly parsed project creation command. */
-export const storeProject = action(
-  Effect.fn('Projects.store')(function* () {
-    const auth = yield* authorize()
-    const validation = yield* Effect.result(
-      validateRequest(CreateProjectInput, {
-        request: bodyOnlyRequest,
-        parseOptions: strictParsing,
-      })
-    )
+/** Strict, retry-safe create-project form contract. */
+export const storeProject = defineStrictForm({
+  name: 'Projects.store',
+  schema: CreateProjectInput,
+  prepare: currentProjectActor,
+  onInvalid: (errors) =>
+    respondWithStrictFormErrors('Projects/Create', errors),
+  onValid: (input, actor) =>
+    Effect.gen(function* () {
+      const projects = yield* Projects
+      const outcome = yield* projects
+        .create(actor, input)
+        .pipe(Effect.mapError(toProjectActionFailure))
 
-    if (Result.isFailure(validation)) {
-      return yield* renderWithErrors(
-        'Projects/Create',
-        validation.failure.errors
-      )
-    }
+      return yield* redirect(`/projects/${outcome.project.project.id}`)
+    }),
+})
 
-    const input = validation.success
-    const db = yield* DatabaseService
-    const now = new Date()
-    const values = asTrusted({
-      id: input.id,
-      userId: auth.user.id,
-      name: input.name,
-      description: input.description,
-      visibility: input.visibility,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    yield* dbMutation(db, values, (tx, scoped) =>
-      tx
-        .insert(projects)
-        .values(scoped)
-        .onConflictDoNothing({ target: projects.id })
-    )
-
-    const rows = yield* readProjects('Projects.store.confirm', () =>
-      db
-        .select()
-        .from(projects)
-        .where(
-          and(
-            eq(projects.id, input.id),
-            eq(projects.userId, auth.user.id)
-          )
-        )
-        .limit(1)
-    )
-    const stored = yield* parseProjects(rows)
-    const project = stored[0]
-
-    if (!project) {
-      return yield* httpError(
-        409,
-        'That project identifier is already in use. Reload the form and try again.'
-      )
-    }
-
-    return yield* redirect(`/projects/${project.id}`)
-  })()
-)
-
-/** Renders one owned project resolved through route-model binding. */
+/** Renders one project found through an owner-scoped service lookup. */
 export const showProject = action(
   Effect.fn('Projects.show')(function* () {
-    const project = yield* boundProject
-    yield* authorize((auth) => auth.user.id === project.userId)
+    const { project } = yield* getOwnedProject
 
     return yield* render('Projects/Show', {
       project: toProjectDetail(project),
@@ -212,11 +225,10 @@ export const showProject = action(
   })()
 )
 
-/** Renders the edit form for one owned route-bound project. */
+/** Renders the edit form for one project found through an owner-scoped lookup. */
 export const editProject = action(
   Effect.fn('Projects.edit')(function* () {
-    const project = yield* boundProject
-    yield* authorize((auth) => auth.user.id === project.userId)
+    const { project } = yield* getOwnedProject
 
     return yield* render('Projects/Edit', {
       project: toProjectDetail(project),
@@ -224,91 +236,146 @@ export const editProject = action(
   })()
 )
 
-/** Applies a strictly parsed update to one owned project. */
-export const updateProject = action(
-  Effect.fn('Projects.update')(function* () {
-    const project = yield* boundProject
-    const auth = yield* authorize(
-      (current) => current.user.id === project.userId
-    )
-    const validation = yield* Effect.result(
-      validateRequest(UpdateProjectInput, {
-        request: bodyOnlyRequest,
-        parseOptions: strictParsing,
-      })
-    )
+/** Strict update form whose owned project is loaded before its body is read. */
+export const updateProject = defineStrictForm({
+  name: 'Projects.update',
+  schema: UpdateProjectInput,
+  prepare: getOwnedProject,
+  onInvalid: (errors, prepared) =>
+    respondWithStrictFormErrors('Projects/Edit', errors, {
+      project: toProjectDetail(prepared.project),
+    }),
+  onValid: (input, prepared) =>
+    Effect.gen(function* () {
+      const projects = yield* Projects
+      const updated = yield* projects
+        .update(prepared.actor, prepared.project.id, input)
+        .pipe(
+          Effect.map(Option.some),
+          Effect.catchTag('ProjectUpdateConflict', () =>
+            Effect.succeed(Option.none())
+          ),
+          Effect.mapError(toProjectActionFailure)
+        )
 
-    if (Result.isFailure(validation)) {
-      return yield* renderWithErrors(
-        'Projects/Edit',
-        validation.failure.errors,
-        { project: toProjectDetail(project) }
+      if (Option.isNone(updated)) {
+        if (yield* prefersJson) {
+          return yield* toProjectActionFailure(
+            new ProjectUpdateConflict({
+              projectId: prepared.project.id,
+            })
+          )
+        }
+
+        const current = yield* projects
+          .getOwned(prepared.actor, prepared.project.id)
+          .pipe(Effect.mapError(toProjectActionFailure))
+
+        return yield* renderWithErrors(
+          'Projects/Edit',
+          {
+            expectedRevision:
+              'This project changed while you were editing it. Reload the latest version before saving again.',
+          },
+          { project: toProjectDetail(current.project) }
+        )
+      }
+
+      return yield* redirect(`/projects/${updated.value.project.id}`)
+    }),
+})
+
+/** Strict deletion form whose owner and revision are checked before retirement. */
+export const destroyProject = defineStrictForm({
+  name: 'Projects.destroy',
+  schema: DeleteProjectInput,
+  prepare: getOwnedProject,
+  onInvalid: (errors, prepared) =>
+    respondWithStrictFormErrors('Projects/Show', errors, {
+      project: toProjectDetail(prepared.project),
+    }),
+  onValid: (input, prepared) =>
+    Effect.gen(function* () {
+      const projects = yield* Projects
+      const outcome = yield* projects
+        .remove(
+          prepared.actor,
+          prepared.project.id,
+          input.expectedRevision
+        )
+        .pipe(
+          Effect.map(Option.some),
+          Effect.catchTag('ProjectDeleteConflict', () =>
+            Effect.succeed(Option.none())
+          ),
+          Effect.mapError(toProjectActionFailure)
+        )
+
+      if (Option.isNone(outcome)) {
+        if (yield* prefersJson) {
+          return yield* toProjectActionFailure(
+            new ProjectDeleteConflict({
+              projectId: prepared.project.id,
+            })
+          )
+        }
+
+        const current = yield* projects
+          .getOwned(prepared.actor, prepared.project.id)
+          .pipe(Effect.mapError(toProjectActionFailure))
+
+        return yield* renderWithErrors(
+          'Projects/Show',
+          {
+            expectedRevision:
+              'This project changed while this page was open. Review the latest details, then confirm again.',
+          },
+          { project: toProjectDetail(current.project) }
+        )
+      }
+
+      if (DeleteProjectOutcome.$is('AlreadyAbsent')(outcome.value)) {
+        return yield* NotFoundError.forResource(
+          'Project',
+          prepared.project.id
+        )
+      }
+
+      return yield* redirect('/projects')
+    }),
+})
+
+const boundProject = bound('project').pipe(
+  Effect.catchTag(
+    'BoundModelNotFound',
+    () =>
+      new HttpError({
+        status: 500,
+        message: 'The public project route binding was not available.',
+      })
+  )
+)
+
+/** Renders an anonymous, explicitly non-cacheable view of a public project. */
+export const showPublicProject = action(
+  Effect.fn('Projects.publicShow')(function* () {
+    const storedProject = yield* boundProject
+    if (
+      storedProject.deletedAt !== null ||
+      storedProject.visibility !== 'public'
+    ) {
+      return yield* NotFoundError.forResource(
+        'Project',
+        storedProject.id
       )
     }
 
-    const input = validation.success
-    const db = yield* DatabaseService
-    const values = asTrusted({
-      name: input.name,
-      description: input.description,
-      visibility: input.visibility,
-      updatedAt: new Date(),
-    })
-
-    yield* dbMutation(db, values, (tx, scoped) =>
-      tx
-        .update(projects)
-        .set(scoped)
-        .where(
-          and(
-            eq(projects.id, project.id),
-            eq(projects.userId, auth.user.id)
-          )
-        )
-    )
-
-    return yield* redirect(`/projects/${project.id}`)
-  })()
-)
-
-/** Deletes one owned project. Repeating the command leaves the same final state. */
-export const destroyProject = action(
-  Effect.fn('Projects.destroy')(function* () {
-    const project = yield* boundProject
-    const auth = yield* authorize(
-      (current) => current.user.id === project.userId
-    )
-    const db = yield* DatabaseService
-    const deletion = asTrusted({
-      id: project.id,
-      userId: auth.user.id,
-    })
-
-    yield* dbMutation(db, deletion, (tx) =>
-      tx
-        .delete(projects)
-        .where(
-          and(
-            eq(projects.id, project.id),
-            eq(projects.userId, auth.user.id)
-          )
-        )
-    )
-
-    return yield* redirect('/projects')
-  })()
-)
-
-/** Renders an anonymous cacheable view of a public project. */
-export const showPublicProject = action(
-  Effect.fn('Projects.publicShow')(function* () {
-    const project = yield* boundProject
-    if (project.visibility !== 'public') {
-      return yield* notFound('Project', project.id)
-    }
-
     return yield* render('Projects/Public', {
-      project: toProjectDetail(project),
+      project: toPublicProject({
+        ...storedProject,
+        deletedAt: null,
+        visibility: 'public',
+      }),
     })
   })()
 )

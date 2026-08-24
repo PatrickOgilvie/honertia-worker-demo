@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 
+import { readViteDevServerConfiguration } from './scripts/dev-environment'
+
+const devServer = readViteDevServerConfiguration()
+
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   resolve: {
@@ -11,9 +15,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
-    cors: true,
-    origin: 'http://localhost:5173',
+    port: devServer.port,
+    strictPort: true,
+    cors: { origin: devServer.workerOrigin },
+    origin: devServer.viteOrigin,
   },
   build: {
     manifest: 'manifest.json',

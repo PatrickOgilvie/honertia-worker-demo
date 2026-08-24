@@ -6,18 +6,20 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "bun run build && concurrently \"bun run dev:vite\" \"bun run dev:worker\"",
-    "dev:vite": "vite --port 5173",
-    "dev:worker": "wrangler dev --port 8787",
-    "build": "vite build",
+    "dev": "bun run build && bun scripts/dev.ts",
+    "dev:vite": "vite",
+    "dev:worker": "wrangler dev",
+    "build": "vite build && bun scripts/verify-build-manifest.ts",
+    "verify:assets": "bun scripts/verify-build-manifest.ts",
     "routes": "bun node_modules/@popcomputer/web/dist/cli/bin.js routes --app src/index.ts",
-    "check": "bun node_modules/@popcomputer/web/dist/cli/bin.js check --app src/index.ts",
+    "check": "bun scripts/check-framework.ts",
     "openapi": "bun node_modules/@popcomputer/web/dist/cli/bin.js generate:openapi --app src/index.ts --include /api --title 'Popcomputer Web Demo API' --version 1.0.0-rc.1 --description 'Protected JSON showcase for @popcomputer/web' --output openapi.json",
+    "openapi:check": "bun scripts/check-openapi.ts",
     "test": "bun test",
     "test:worker": "bash scripts/smoke-worker.sh",
     "typecheck": "tsc --noEmit",
     "deploy:dry": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "verify": "bun run typecheck && bun test && bun run check && bun run openapi && bun run test:worker && bun run deploy:dry",
+    "verify": "bun run build && bun run typecheck && bun test && bun run check && bun run openapi:check && bun run test:worker && bun run verify:assets && bun run deploy:dry",
     "db:create": "wrangler d1 create popcomputer-web-demo-db --binding DB --update-config",
     "db:migrate": "wrangler d1 migrations apply DB --remote",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
@@ -49,13 +51,19 @@
     "vite": "^6.4.2",
     "wrangler": "4.124.0"
   },
-  "deploy-button": {
+  "cloudflare": {
     "bindings": {
       "DB": {
-        "description": "D1 database for Better Auth users and sessions"
+        "description": "D1 database for Better Auth users, sessions, rate limits, and application projects."
       },
       "BETTER_AUTH_SECRET": {
-        "description": "Secret key for authentication (any random string)"
+        "description": "Authentication secret with at least 32 characters of high entropy. Generate one with `openssl rand -base64 32`."
+      },
+      "APP_ORIGIN": {
+        "description": "Canonical public HTTP(S) origin of this Worker, including a non-default port when present and no trailing path (for example `https://demo.example.com`)."
+      },
+      "ENVIRONMENT": {
+        "description": "Closed deployment mode. Use exactly `production` for deployed Workers or `development` locally."
       }
     }
   }

@@ -1,13 +1,13 @@
 name = "popcomputer-web-demo"
-main = "src/index.ts"
+main = "src/worker.ts"
 compatibility_date = "2026-08-04"
 compatibility_flags = ["nodejs_compat"]
 
-[cache]
-enabled = true
-
 [assets]
 directory = "dist"
+
+[triggers]
+crons = ["* * * * *"]
 
 [[d1_databases]]
 binding = "DB"
@@ -17,3 +17,6 @@ migrations_dir = "migrations"
 
 [vars]
 ENVIRONMENT = "production"
+# Required at runtime. Replace this invalid sentinel with the exact deployed
+# HTTP(S) origin; the Worker intentionally fails closed until it is configured.
+APP_ORIGIN = "configure-me"

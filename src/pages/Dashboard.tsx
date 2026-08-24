@@ -3,122 +3,61 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import Layout from '~/components/Layout'
 import type { PageProps } from '~/types'
 
-const capabilities = [
-  {
-    id: 'routing',
-    label: '@popcomputer/web',
-    description: 'Server-driven routing with instant client-side navigation.',
-    detail: 'Routing + actions',
-  },
-  {
-    id: 'database',
-    label: 'Cloudflare D1',
-    description: 'SQLite-compatible persistence deployed alongside your Worker.',
-    detail: 'Edge persistence',
-  },
-  {
-    id: 'auth',
-    label: 'Better Auth',
-    description: 'Session-backed authentication protecting server routes.',
-    detail: 'Secure sessions',
-  },
-] as const
-
-const requestSteps = [
-  {
-    label: 'Route matched',
-    detail: 'Hono resolves the protected route at the edge.',
-  },
-  {
-    label: 'Session verified',
-    detail: 'Better Auth supplies the signed-in user.',
-  },
-  {
-    label: 'Effect executed',
-    detail: 'Typed services compose the server workflow.',
-  },
-  {
-    label: 'Page hydrated',
-    detail: 'React receives narrow, server-owned props.',
-  },
-] as const
-
-const showcaseDestinations = [
+const destinations = [
   {
     id: 'projects',
     href: '/projects',
-    kicker: 'Effect-native CRUD',
     title: 'Projects',
-    description:
-      'Create, bind, authorize, and publish a D1 record through one typed workflow.',
-    features: ['Strict schemas', 'Route binding', 'Cache purges'],
-    action: 'Explore projects',
+    description: 'Create, manage, and publish your D1-backed projects.',
+    detail: 'Owner-scoped records',
   },
   {
     id: 'sessions',
     href: '/sessions',
-    kicker: 'New in v0.4',
     title: 'Sessions',
-    description:
-      'Call Better Auth through Effect, inspect live sessions, and revoke one with typed failures.',
-    features: ['effectifyBetterAuth', 'Typed errors', 'Session revoke'],
-    action: 'Review sessions',
+    description: 'Review active sessions and revoke access when needed.',
+    detail: 'Better Auth security',
   },
 ] as const
 
-function CapabilityIcon({ id }: { readonly id: (typeof capabilities)[number]['id'] }) {
-  if (id === 'routing') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="4" y="4" width="6" height="6" rx="1.5" />
-        <rect x="14" y="14" width="6" height="6" rx="1.5" />
-        <path d="M10 7h2a5 5 0 0 1 5 5v2M14 17h-2a5 5 0 0 1-5-5v-2" />
-      </svg>
-    )
-  }
+const requestSteps = ['Hono', 'Better Auth', 'Effect', 'React'] as const
 
-  if (id === 'database') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <ellipse cx="12" cy="6" rx="7" ry="3" />
-        <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
-      </svg>
-    )
-  }
+const runtimeFacts = [
+  { label: 'Route', value: 'GET /' },
+  { label: 'Database', value: 'Cloudflare D1' },
+  { label: 'Rendering', value: 'Inertia + React' },
+] as const
 
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M7 10V7a5 5 0 0 1 10 0v3" />
-      <rect x="4" y="10" width="16" height="11" rx="3" />
-      <path d="M12 14v3" />
-    </svg>
-  )
-}
+type DestinationId = (typeof destinations)[number]['id']
 
-function ShowcaseIcon({
-  id,
-}: {
-  readonly id: (typeof showcaseDestinations)[number]['id']
-}) {
+function DestinationIcon({ id }: { readonly id: DestinationId }) {
   if (id === 'projects') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M4 7.5h6l2 2h8v9.5H4z" />
-        <path d="M4 7.5V5h6l2 2" />
+        <path d="M3.75 7.25h6.1l2.15 2.2h8.25v9.3H3.75z" />
+        <path d="M3.75 7.25V5.5h6.1L12 7.7" />
       </svg>
     )
   }
 
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <rect x="4" y="5" width="16" height="14" rx="3" />
-      <path d="M8 10h8M8 14h5" />
-      <circle cx="17" cy="15" r="2.5" />
+      <rect x="3.75" y="5" width="16.5" height="14" rx="3" />
+      <path d="M7.75 9.75h8.5M7.75 14h5" />
+      <circle cx="17.25" cy="15" r="2.35" />
     </svg>
   )
 }
 
-/** Presents the authenticated framework showcase. */
+function ArrowIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <path d="M4 10h11M11 6l4 4-4 4" />
+    </svg>
+  )
+}
+
+/** Presents the authenticated framework dashboard. */
 export default function Dashboard() {
   const { auth } = usePage<PageProps>().props
   const trimmedName = auth?.user?.name?.trim()
@@ -136,172 +75,93 @@ export default function Dashboard() {
       </Head>
       <Layout>
         <div className="dashboard">
-          <section className="dashboard-hero" aria-labelledby="dashboard-title">
-            <div className="hero-copy">
-              <div className="session-pill">
-                <span className="status-dot" aria-hidden="true" />
-                Authenticated session
-              </div>
-              <p className="eyebrow">Edge-native application</p>
-              <h1 id="dashboard-title">Welcome, {firstName}</h1>
-              <p className="hero-description">
-                Your request crossed routing, authentication, and a typed Effect
-                workflow before this React page appeared—without a full reload.
+          <header className="dashboard-welcome">
+            <div className="dashboard-welcome-copy">
+              <p className="dashboard-overline">
+                <span aria-hidden="true" />
+                Workspace ready
               </p>
-              <div className="signed-in-as">
-                <span>Signed in as</span>
-                <strong>{email}</strong>
-              </div>
-              <div className="hero-actions">
-                <Link href="/projects" className="primary-link">
-                  Explore projects
-                  <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                    <path d="M4 10h12M11.5 5.5 16 10l-4.5 4.5" />
-                  </svg>
-                </Link>
-                <Link href="/sessions" className="secondary-link">
-                  Review sessions
-                </Link>
-              </div>
+              <h1>Welcome back, {firstName}.</h1>
+              <p className="dashboard-intro">
+                Your projects and account activity are ready when you are.
+              </p>
             </div>
+            <p className="dashboard-identity">
+              <span>Signed in as</span>
+              <strong>{email}</strong>
+            </p>
+          </header>
 
-            <div className="live-request" aria-label="Current request flow">
-              <div className="live-request-header">
-                <div>
-                  <span className="live-request-kicker">Latest request</span>
-                  <strong>Dashboard</strong>
-                </div>
-                <span className="request-duration">200 OK</span>
-              </div>
-              <div className="route-line">
-                <code>
-                  <span>GET</span> /
-                </code>
-                <span>Protected</span>
-              </div>
-              <ol className="route-flow">
-                <li>
-                  <span>01</span>
-                  Hono
-                </li>
-                <li>
-                  <span>02</span>
-                  Auth
-                </li>
-                <li>
-                  <span>03</span>
-                  Effect
-                </li>
-                <li>
-                  <span>04</span>
-                  React
-                </li>
-              </ol>
-            </div>
-          </section>
-
-          <section className="showcase-section" aria-labelledby="showcase-title">
-            <div className="section-heading">
+          <section
+            className="dashboard-destinations"
+            aria-labelledby="destinations-title"
+          >
+            <div className="dashboard-section-heading">
               <div>
-                <p className="eyebrow">Try the v4 paths</p>
-                <h2 id="showcase-title">The new capabilities, in motion</h2>
+                <p className="dashboard-label">Workspace</p>
+                <h2 id="destinations-title">Continue where you left off</h2>
               </div>
-              <p>
-                Two focused journeys turn the framework&apos;s latest typed
-                boundaries into something you can click through.
-              </p>
+              <p>Choose a destination. Everything else stays out of the way.</p>
             </div>
 
-            <div className="showcase-grid">
-              {showcaseDestinations.map((showcase) => {
-                const titleId = `showcase-${showcase.id}-title`
-                return (
-                  <Link
-                    key={showcase.id}
-                    href={showcase.href}
-                    className={`showcase-card showcase-card--${showcase.id}`}
-                    aria-labelledby={titleId}
-                  >
-                    <div className="showcase-card-header">
-                      <span className="showcase-icon">
-                        <ShowcaseIcon id={showcase.id} />
-                      </span>
-                      <span className="showcase-kicker">{showcase.kicker}</span>
-                    </div>
-                    <h3 id={titleId}>{showcase.title}</h3>
-                    <p>{showcase.description}</p>
-                    <ul
-                      className="showcase-features"
-                      aria-label={`${showcase.title} highlights`}
-                    >
-                      {showcase.features.map((feature) => (
-                        <li key={feature}>{feature}</li>
-                      ))}
-                    </ul>
-                    <span className="showcase-action">
-                      {showcase.action}
-                      <svg
-                        viewBox="0 0 20 20"
-                        aria-hidden="true"
-                        focusable="false"
-                      >
-                        <path d="M4 10h12M11.5 5.5 16 10l-4.5 4.5" />
-                      </svg>
-                    </span>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-
-          <section className="dashboard-section" aria-labelledby="stack-title">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Under the hood</p>
-                <h2 id="stack-title">A small stack with deep seams</h2>
-              </div>
-              <p>
-                Each layer owns one job, while the page remains fast and
-                pleasantly ordinary to use.
-              </p>
-            </div>
-
-            <dl className="capability-grid">
-              {capabilities.map((capability) => (
-                <div className="capability-card" key={capability.id}>
-                  <span className={`capability-icon capability-icon--${capability.id}`}>
-                    <CapabilityIcon id={capability.id} />
+            <div className="destination-grid">
+              {destinations.map((destination) => (
+                <Link
+                  key={destination.id}
+                  href={destination.href}
+                  className={`destination-card destination-card--${destination.id}`}
+                >
+                  <span className="destination-icon">
+                    <DestinationIcon id={destination.id} />
                   </span>
-                  <dt translate="no">{capability.label}</dt>
-                  <dd>{capability.description}</dd>
-                  <span className="capability-detail">{capability.detail}</span>
-                </div>
-              ))}
-            </dl>
-          </section>
-
-          <section className="journey-panel" aria-labelledby="journey-title">
-            <div className="journey-intro">
-              <p className="eyebrow">One request, end to end</p>
-              <h2 id="journey-title">The invisible work stays invisible.</h2>
-              <p>
-                The demo keeps boundaries explicit on the server and the
-                experience effortless in the browser.
-              </p>
-            </div>
-            <ol className="journey-list">
-              {requestSteps.map((step, index) => (
-                <li key={step.label}>
-                  <span className="journey-number">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div>
-                    <strong>{step.label}</strong>
-                    <p>{step.detail}</p>
+                  <div className="destination-copy">
+                    <h3>{destination.title}</h3>
+                    <p>{destination.description}</p>
                   </div>
+                  <span className="destination-footer">
+                    <span>{destination.detail}</span>
+                    <span className="destination-arrow">
+                      <ArrowIcon />
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="runtime-panel" aria-labelledby="runtime-title">
+            <div className="runtime-summary">
+              <div>
+                <p className="dashboard-label">Latest request</p>
+                <h2 id="runtime-title">Everything is working.</h2>
+                <p>
+                  This page crossed four typed boundaries at the edge before it
+                  reached your browser.
+                </p>
+              </div>
+              <span className="runtime-status">
+                <span aria-hidden="true" />
+                200 OK
+              </span>
+            </div>
+
+            <ol className="request-track" aria-label="Request lifecycle">
+              {requestSteps.map((step, index) => (
+                <li key={step}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <strong>{step}</strong>
                 </li>
               ))}
             </ol>
+
+            <dl className="runtime-facts">
+              {runtimeFacts.map((fact) => (
+                <div key={fact.label}>
+                  <dt>{fact.label}</dt>
+                  <dd translate="no">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
         </div>
       </Layout>

@@ -1,5 +1,2 @@
-# Authentication secret - use any random string
-BETTER_AUTH_SECRET=your-secret-key-here-change-in-production
-
-# Environment - set to development for local dev (uses Vite HMR)
-ENVIRONMENT=development
+# Authentication secret - generate a high-entropy value with at least 32 characters
+BETTER_AUTH_SECRET=local-development-secret-change-me-123456789

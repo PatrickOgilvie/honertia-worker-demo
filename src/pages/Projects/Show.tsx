@@ -1,10 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import ConfirmationDialog from '~/components/ConfirmationDialog'
 import Layout from '~/components/Layout'
 import ProjectVisibilityBadge from '~/components/ProjectVisibilityBadge'
-import type { ProjectDetail } from '~/types'
+import type { ProjectDetail } from '~/presentation/project'
 
 interface ShowProjectProps {
   readonly project: ProjectDetail
@@ -22,9 +22,18 @@ function formatTimestamp(value: string): string {
 
 /** Presents an owner-authorized project with update and guarded delete actions. */
 export default function ShowProject({ project }: ShowProjectProps) {
-  const { delete: destroy, processing } = useForm({})
+  const {
+    delete: destroy,
+    errors,
+    processing,
+    setData,
+  } = useForm({ expectedRevision: project.revision })
   const [confirmsDelete, setConfirmsDelete] = useState(false)
   const projectPath = `/projects/${encodeURIComponent(project.id)}`
+
+  useEffect(() => {
+    setData('expectedRevision', project.revision)
+  }, [project.revision, setData])
 
   function handleDelete() {
     destroy(projectPath, {
@@ -47,7 +56,7 @@ export default function ShowProject({ project }: ShowProjectProps) {
           <header className="project-detail-header">
             <div className="page-heading">
               <div className="heading-badges">
-                <p className="eyebrow">Owner-bound project</p>
+                <p className="eyebrow">Owner-scoped project</p>
                 <ProjectVisibilityBadge visibility={project.visibility} />
               </div>
               <h1>{project.name}</h1>
@@ -80,15 +89,15 @@ export default function ShowProject({ project }: ShowProjectProps) {
                 <ol>
                   <li>
                     <span>01</span>
-                    <strong>Model bound</strong>
+                    <strong>Request authenticated</strong>
                   </li>
                   <li>
                     <span>02</span>
-                    <strong>Owner authorized</strong>
+                    <strong>Owner-scoped lookup</strong>
                   </li>
                   <li>
                     <span>03</span>
-                    <strong>Props rendered</strong>
+                    <strong>Safe props rendered</strong>
                   </li>
                 </ol>
               </div>
@@ -123,7 +132,10 @@ export default function ShowProject({ project }: ShowProjectProps) {
 
               <section className="danger-zone">
                 <h2>Delete project</h2>
-                <p>Permanently removes this project from D1.</p>
+                <p>
+                  Removes its content and retires this identifier for the
+                  lifetime of your account.
+                </p>
                 <button
                   type="button"
                   className="danger-outline-button"
@@ -141,10 +153,11 @@ export default function ShowProject({ project }: ShowProjectProps) {
       <ConfirmationDialog
         open={confirmsDelete}
         title="Delete project?"
-        description={`This will permanently delete “${project.name}”. This action can’t be undone.`}
+        description={`This removes “${project.name}” and retires its identifier for the lifetime of your account. This action can’t be undone.`}
         confirmLabel="Delete project"
         busyLabel="Deleting…"
         busy={processing}
+        error={errors.expectedRevision}
         onCancel={() => setConfirmsDelete(false)}
         onConfirm={handleDelete}
       />

@@ -1,5 +1,5 @@
 import TextField from '~/components/TextField'
-import type { ProjectSummary } from '~/types'
+import type { ProjectSummary } from '~/presentation/project'
 
 /** Editable values shared by the create and update project forms. */
 export interface ProjectFormValues {
@@ -123,7 +123,7 @@ export default function ProjectFormFields({
             <span className="visibility-control" aria-hidden="true" />
             <span>
               <strong>Public</strong>
-              <small>Eligible for the cache-safe public showcase.</small>
+              <small>Anyone with the showcase link can view it.</small>
             </span>
           </label>
         </div>

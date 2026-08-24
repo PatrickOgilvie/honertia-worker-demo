@@ -1,0 +1,6 @@
+CREATE TABLE rate_limits (
+  id TEXT PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  count INTEGER NOT NULL,
+  last_request INTEGER NOT NULL
+);

@@ -1,10 +1,12 @@
 import { Head, Link } from '@inertiajs/react'
 
 import Layout from '~/components/Layout'
-import type { ProjectDetail } from '~/types'
+import type {
+  PublicProject as PublicProjectResource,
+} from '~/presentation/project'
 
 interface PublicProjectProps {
-  readonly project: ProjectDetail
+  readonly project: PublicProjectResource
 }
 
 const updatedAtFormatter = new Intl.DateTimeFormat(undefined, {
@@ -17,7 +19,7 @@ function formatUpdatedAt(value: string): string {
   return Number.isNaN(date.getTime()) ? value : updatedAtFormatter.format(date)
 }
 
-/** Presents the cache-eligible public projection of a project. */
+/** Presents the current public projection of a project. */
 export default function PublicProject({ project }: PublicProjectProps) {
   return (
     <>
@@ -36,9 +38,9 @@ export default function PublicProject({ project }: PublicProjectProps) {
                 <span className="visibility-dot" aria-hidden="true" />
                 Public
               </span>
-              <span className="cache-badge">
+              <span className="privacy-badge">
                 <span aria-hidden="true" />
-                Cache eligible
+                Live visibility
               </span>
             </div>
             <h1>{project.name}</h1>
@@ -46,13 +48,13 @@ export default function PublicProject({ project }: PublicProjectProps) {
           </header>
 
           <div className="public-project-body">
-            <section className="public-story" aria-labelledby="cache-story-title">
+            <section className="public-story" aria-labelledby="privacy-story-title">
               <p className="eyebrow">@popcomputer/web at work</p>
-              <h2 id="cache-story-title">Fast in public, safe in private</h2>
+              <h2 id="privacy-story-title">Public when you say so</h2>
               <p>
-                This projection can use Cloudflare’s cache, while session-bearing
-                and partial Inertia requests remain private by default. Updating
-                the project purges its tagged response.
+                Each visit reads the current project visibility. This page is not
+                stored at the edge, so making the project private or deleting it
+                takes effect immediately.
               </p>
 
               <dl className="public-stack-grid">
@@ -66,7 +68,7 @@ export default function PublicProject({ project }: PublicProjectProps) {
                 </div>
                 <div>
                   <dt>Delivery</dt>
-                  <dd>Tagged cache</dd>
+                  <dd>Always current</dd>
                 </div>
               </dl>
             </section>
